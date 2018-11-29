@@ -55,8 +55,14 @@ def executeCA(width, depth, height, options):
 			cells = findCells(matrix[h], width, depth)
 			for x, y in cells:
 				updateSides(matrix,width,depth,h,x,y,0.2,options["Top"].ID)
-		generations += 1
+		generations += random.randint(1,4)
 		prevh = h
+
+		# if the width/depth box is already filled at the current Height
+		# stop generating and bring all the mountain downwards to the ground
+		if reachedBoxLimit(matrix,h):
+			matrix = adjustMatrix(matrix,h)
+			break
 
 	return matrix
 
@@ -93,6 +99,36 @@ def findCells(matrix, w, d):
 			if matrix[x][y] != 0:
 				cells.append( (x,y))
 	return cells
+
+def adjustMatrix(matrix, h):
+	drop = h
+
+	for top_height in range(h, len(matrix)):
+		for current_h in range(top_height, top_height-drop, -1):
+			for x in range(len(matrix[current_h])):
+				for z in range(len(matrix[current_h][x])):
+					matrix[current_h-1][x][z]= matrix[current_h][x][z]
+					matrix[current_h][x][z] = 0
+	return matrix
+
+def reachedBoxLimit(matrix, h):
+	size = 0
+	for i in range(len(matrix[h])):
+		size += len(matrix[h][i])
+
+	total = 0
+	for x in range(len(matrix[h])):
+		for z in range(len(matrix[h][x])):
+			if matrix[h][x][z] != 0:
+				total += 1
+	print("SIZE: ", size)
+	print("FILLED: ", total)
+
+	if total > size * 0.85:
+		print("THRESHOLD!")
+		return True
+	else:
+		return False
 
 def printBoxInfo(box):
 	print("Printing Box Info: ")
