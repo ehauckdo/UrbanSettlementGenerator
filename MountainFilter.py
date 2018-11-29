@@ -20,16 +20,12 @@ def generateMountainsCA(level, box, options):
 	h = height-1
 	d = depth -1
 
-	for y in range(box.maxy, box.miny, -1):
-		for x in range(box.maxx, box.minx, -1):
-			for z in range(box.maxz, box.minz, -1):
+	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
+		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
+			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
 				if matrix[h][w][d] is not 0:
 					utilityFunctions.setBlock(level, (matrix[h][w][d], 0), x, y, z)
-				d = d - 1
-			w = w - 1
-			d = depth - 1
-		w = width-1
-		h = h - 1
+
 	return
 
 # top-down implementation, so far the best result!
