@@ -4,7 +4,7 @@ import random
 
 inputs = (
 	("Mountain Generator", "label"),
-	("Material", alphaMaterials.Cobblestone),
+	("Material", alphaMaterials.Grass),
 	)
 
 def perform(level, box, options):
@@ -46,6 +46,7 @@ def thirdImplementationCA(matrix, width, depth, height):
 	# fill the peak with some blocks
 	matrix[height-1][xpeak][zpeak] = 1
 	updateSides(matrix,width,depth,height-1,xpeak,zpeak,1)
+	updateDiagonals(matrix,width,depth,height-1,xpeak,zpeak,0.5)
 
 	# how many times execute CA in h-1 level
 	generations = 5
@@ -74,6 +75,17 @@ def updateSides(matrix,width,depth,h,x,y,p):
 		matrix[h][x][y-1] = 1
 	if ((y+1 < depth) and random.random() < p):
 		matrix[h][x][y+1] = 1
+
+def updateDiagonals(matrix,width,depth,h,x,y,p):
+
+	if ((x+1 < width) and (y+1 < depth) and random.random() < p):
+		matrix[h][x+1][y+1] = 1
+	if ((x+1 < width) and (y-1 >= 0) and random.random() < p):
+		matrix[h][x+1][y-1] = 1
+	if ((x-1 >= 0) and (y+1 < depth) and random.random() < p):
+		matrix[h][x-1][y+1] = 1
+	if ((x-1 >= 0) and (y-1 >= 0) and random.random() < p):
+		matrix[h][x-1][y-1] = 1
 
 def updateUpper(matrix,h,x,y,p):
 	if (random.random() < p):
