@@ -9,22 +9,22 @@ inputs = (
 	)
 
 def perform(level, box, options):
-	houseGenerator(level,box,options)
-	#mazeGenerator(level,box,options)
+	#houseGenerator(level,box,options)
+	mazeGenerator(level,box,options)
 	return
 
 def mazeGenerator(level,box,options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = generateMatrix(width,depth,height,options)
 
-	initial_x = random.randint(5, width-5)
-	initial_z = random.randint(5, depth-5)
+	initial_x = random.randint(1, width-15)
+	initial_z = random.randint(1, depth-15)
 
-	w = random.randint(3, 6)
-	d = random.randint(3, 6)
-	h = random.randint(3, 6)
+	w = random.randint(6, 15)
+	d = random.randint(6, 15)
+	h = random.randint(12, height-1)
 
-	generateHouse(matrix, 0, h, initial_x, initial_x+w, initial_z, initial_z+3, options)
+	generateHouse(matrix, 0, h, initial_x, initial_x+w, initial_z, initial_z+d, options)
 
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
@@ -35,7 +35,7 @@ def mazeGenerator(level,box,options):
 def houseGenerator(level,box,options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = generateMatrix(width,depth,height,options)
-	matrix = generateHouse(matrix, 0, height-1, 0, width-1, 0, depth-1, options)
+	matrix = generateHouse(matrix, 0, height-10, 10, width-10, 10, depth-10, options)
 
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
@@ -52,11 +52,14 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	ceiling = (options["Ceiling"].ID,0)
 	door = (0,0)
 
-	matrix = addWalls(matrix, h_min, h_max, x_min, x_max, z_min, z_max, wall)
+	ceiling_bottom = h_max-2 -int((h_max-h_min) * 0.5)
 
-	matrix = addCeiling(matrix, h_max-h_min+1, x_min, x_max, z_min, z_max, ceiling)
+	matrix = addWalls(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max, wall)
+
+	#matrix = addCeiling(matrix, h_max-h_min+1, x_min, x_max, z_min, z_max, ceiling)
+	matrix = generateCeiling(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, 0)
 		
-	matrix = addDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door, door)
+	matrix = addDoor(matrix, x_min, x_max, z_min, z_max, h_min, ceiling_bottom, door, door)
 		
 	return matrix
 
@@ -82,6 +85,18 @@ def addCeiling(matrix, height, x_min, x_max, z_min, z_max, ceiling):
 	for x in range(x_min, x_max+1):
 		for z in range(z_min, z_max+1):
 				matrix[height-1][x][z] = ceiling
+
+	return matrix
+
+def generateCeiling(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, recr):
+
+	# ceiling on every block on uppermost y axis value
+	for x in range(x_min+recr-1, x_max+2-recr):
+		for z in range(z_min-1, z_max+2):
+				matrix[h_min+recr][x][z] = ceiling
+
+	if recr < h_max-h_min:
+		matrix  = generateCeiling(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, recr+1)
 
 	return matrix
 
