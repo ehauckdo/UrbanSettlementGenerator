@@ -139,9 +139,9 @@ def generateCeiling_d(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 		old_recr = h_min+recr
 		while  z_min+recr+1 < z_max-recr-1:
 			recr += 1
-			for z in range (x_min, x_max+1):
-				matrix[h_min+recr][x][z_min+recr+1] = ceiling
-				matrix[h_min+recr][x][z_max-recr-1] = ceiling
+			for x in range (x_min, x_max+1):
+				matrix[old_recr][x][z_min+recr+1] = ceiling
+				matrix[old_recr][x][z_max-recr-1] = ceiling
 	return matrix
 
 def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):

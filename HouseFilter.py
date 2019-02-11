@@ -3,7 +3,7 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 from BinarySpacePartitioning import binarySpacePartitioning
-from HouseGenerator import houseGenerator
+from HouseGenerator import houseGenerator, generateHouse
 from MultistoreyBuildingGenerator import buildingGenerator
 
 inputs = (
@@ -23,6 +23,11 @@ def perform(level, box, options):
 	#houseGenerator(level,box,options)
 	#buildingGenerator(level,box,options)
 	return
+
+def generateMatrix(width, depth, height, options):
+	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
+	return matrix
+
 
 def pavementGround(level,box,options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
