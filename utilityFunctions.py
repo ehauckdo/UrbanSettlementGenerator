@@ -182,3 +182,24 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 def generateMatrix(width, depth, height, options):
 	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
 	return matrix
+
+def getSubsection(x_min, x_max, z_min, z_max, percentage=0.8):
+
+	width = x_max - x_min
+	x_mid = x_min + int(width/2)
+
+	subsection_x_size = int(width*percentage)
+	subsection_x_mid = int(subsection_x_size/2)
+	subsection_x_min = x_mid - subsection_x_mid
+	subsection_x_max = x_mid + subsection_x_mid
+
+	depth = z_max - z_min
+	z_mid = z_min + int(depth/2)
+
+	subsection_z_size = int(depth*percentage)
+	subsection_z_mid = int(subsection_z_size/2)
+
+	subsection_z_min = z_mid - subsection_z_mid
+	subsection_z_max = z_mid + subsection_z_mid
+
+	return (subsection_x_min, subsection_x_max, subsection_z_min, subsection_z_max)

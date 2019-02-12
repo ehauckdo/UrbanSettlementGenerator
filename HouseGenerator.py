@@ -34,7 +34,7 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	if h_max-h_min < 10 or x_max-x_min < 8 or z_max-z_min < 8:
 		return matrix
 
-	h_max = 25 if h_max > 25 else h_max
+	h_max = 15 if h_max > 15 else h_max
 	
 	wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
@@ -45,19 +45,18 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	walls_pos = [x_min+1, x_max-1, z_min+1, z_max-1]
 
-	# generate walls from x_min+1, x_max-1, etc to leave space for the ceiling
+	# generate walls from x_min+1, x_max-1, etc to leave space for the roof
 	matrix = generateWalls(matrix, h_min, ceiling_bottom, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
-
 	matrix = generateFloor(matrix, h_min, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], floor)
 
-	matrix = generateDoor(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
-
-	matrix = generateWindow(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
-
 	if random.random() > 0.5:
+		matrix = generateDoor_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
+		matrix = generateWindow_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
 		matrix = generateCeiling_x(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
 	else:
-		matrix = generateCeiling_d(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
+		matrix = generateDoor_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
+		matrix = generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
+		matrix = generateCeiling_z(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
 
 	return matrix
 
@@ -82,27 +81,16 @@ def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_m
 			matrix[y][x_max][z] = wall
 			matrix[y][x_min][z] = wall
 
-
-
-	return matrix
-
-def addCeiling(matrix, height, x_min, x_max, z_min, z_max, ceiling):
-
-	# ceiling on every block on uppermost y axis value
-	for x in range(x_min, x_max+1):
-		for z in range(z_min, z_max+1):
-				matrix[height-1][x][z] = ceiling
-
 	return matrix
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
 	if x_min+recr+1 <= x_max-recr-1:
-		for z in range(z_min, z_max+1):
-			matrix[h_min+recr][x_min+recr][z] = ceiling
-			matrix[h_min+recr][x_max-recr][z] = ceiling
-			matrix[h_min+recr][x_min+recr+1][z] = ceiling
-			matrix[h_min+recr][x_max-recr-1][z] = ceiling
+		for z in range(z_min, z_max+1):					  # intended pitched roof effect
+			matrix[h_min+recr][x_min+recr][z] = ceiling   #       _  
+			matrix[h_min+recr][x_max-recr][z] = ceiling   #     _| |_
+			matrix[h_min+recr][x_min+recr+1][z] = ceiling #   _|     |_
+			matrix[h_min+recr][x_max-recr-1][z] = ceiling # _|         |_
 		for x in range(x_min+recr+2, x_max-recr-1):
 			matrix[h_min+recr][x][z_min+1] = wall
 			matrix[h_min+recr][x][z_max-1] = wall
@@ -119,7 +107,7 @@ def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 
 	return matrix
 
-def generateCeiling_d(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
+def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
 	if z_min+recr+1 <= z_max-recr-1:
 		for x in range(x_min, x_max+1):
@@ -132,7 +120,7 @@ def generateCeiling_d(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 			matrix[h_min+recr][x_max-1][z] = wall
 
 	if recr < h_max-h_min:
-		matrix  = generateCeiling_d(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
+		matrix  = generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
 	else:
 		old_recr = h_min+recr
 		while  z_min+recr+1 < z_max-recr-1:
@@ -142,72 +130,76 @@ def generateCeiling_d(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 				matrix[old_recr][x][z_max-recr-1] = ceiling
 	return matrix
 
-def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
+def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
+	pos = random.randint(x_min+1,x_max-1)
 	chance = random.random()
-	if chance < 0.25:
-		pos = random.randint(z_min+1,z_max-1)
-		matrix[h_min+1][x_min][pos] = (64,9)
-		matrix[h_min][x_min][pos] = (64,0)
-	elif chance < 0.50:
-		pos = random.randint(x_min+1,x_max-1)
+	if chance < 0.50:
 		matrix[h_min+1][pos][z_min] = (64,8)
 		matrix[h_min][pos][z_min] = (64,1)
-	elif chance < 0.75:
-		pos = random.randint(z_min+1,z_max-1)
-		matrix[h_min+1][x_max][pos] = (64,9)
-		matrix[h_min][x_max][pos] = (64,2)
 	else:
-		pos = random.randint(x_min+1,x_max-1)
 		matrix[h_min+1][pos][z_max] = (64,8)
 		matrix[h_min][pos][z_max] = (64,3)
 
 	return matrix
 
-def generateWindow(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
+def generateDoor_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
-	# Still need to implement inspection of block before generating!!
-	# (properly check if not generating window on top of a door)
+	pos = random.randint(z_min+1,z_max-1)
+	chance = random.random()
+	if chance < 0.50:
+		matrix[h_min+1][x_min][pos] = (64,9)
+		matrix[h_min][x_min][pos] = (64,0)
+	else:
+		matrix[h_min+1][x_max][pos] = (64,9)
+		matrix[h_min][x_max][pos] = (64,2)
+
+	return matrix
+
+def generateWindow_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 
 	window_height = h_max - int((h_max - h_min)/1.5)
 	whmin = h_max - int((h_max - h_min)/1.5)
 	whmax = h_max - int((h_max - h_min)/2.5)
 
+	width = z_max - z_min
+	pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+	pos_max= random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
 
-	if random.random() < 0.75:
-		width = z_max - z_min
-		pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-		pos_max= random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+	for p in range(pos_min, pos_max):
+		for w in range(whmin, whmax):
+			matrix[w][x_min][p] = (20,0)
 
-		for p in range(pos_min, pos_max):
-			for w in range(whmin, whmax):
-				matrix[w][x_min][p] = (20,0)
+	width = z_max - z_min
+	pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+	pos_max= random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
 
-	if random.random() < 0.75:
-		width = x_max - x_min
-		pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-		pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+	for p in range(pos_min, pos_max):
+		for w in range(whmin, whmax):
+			matrix[w][x_max][p] = (20,0)
 
-		for p in range(pos_min, pos_max):
-			for w in range(whmin, whmax):
-				matrix[w][p][z_min] = (20,0)
+	return matrix
 
-	if random.random() < 0.75:
-		width = z_max - z_min
-		pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-		pos_max= random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+def generateWindow_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 
-		for p in range(pos_min, pos_max):
-			for w in range(whmin, whmax):
-				matrix[w][x_max][p] = (20,0)
+	window_height = h_max - int((h_max - h_min)/1.5)
+	whmin = h_max - int((h_max - h_min)/1.5)
+	whmax = h_max - int((h_max - h_min)/2.5)
 
-	if random.random() < 0.75:
-		width = x_max - x_min
-		pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-		pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+	width = x_max - x_min
+	pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+	pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
 
-		for p in range(pos_min, pos_max):
-			for w in range(whmin, whmax):
-				matrix[w][p][z_max] = (20,0)
+	for p in range(pos_min, pos_max):
+		for w in range(whmin, whmax):
+			matrix[w][p][z_min] = (20,0)
+
+	width = x_max - x_min
+	pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+	pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+
+	for p in range(pos_min, pos_max):
+		for w in range(whmin, whmax):
+			matrix[w][p][z_max] = (20,0)
 
 	return matrix
