@@ -5,10 +5,10 @@ import math
 
 def houseGenerator(level,box,options, min_h=10, min_w=8, min_d=8):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	matrix = generateMatrix(width,depth,height,options)
+	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 
 	if height < min_h or width < min_w or depth < min_d:
-		return
+		return 
 
 	h = random.randint(min_h, height)
 	w = random.randint(min_w, width)
@@ -29,13 +29,12 @@ def houseGenerator(level,box,options, min_h=10, min_w=8, min_d=8):
 				if matrix[h][w][d] != (0,0):
 					utilityFunctions.setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
 
-
-
-def generateMatrix(width, depth, height, options):
-	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
-	return matrix
-
 def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
+
+	if h_max-h_min < 10 or x_max-x_min < 8 or z_max-z_min < 8:
+		return matrix
+
+	h_max = 25 if h_max > 25 else h_max
 	
 	wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
@@ -48,7 +47,6 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	# generate walls from x_min+1, x_max-1, etc to leave space for the ceiling
 	matrix = generateWalls(matrix, h_min, ceiling_bottom, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
-	#matrix = generateWalls(matrix, h_min, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
 
 	matrix = generateFloor(matrix, h_min, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], floor)
 
@@ -211,35 +209,5 @@ def generateWindow(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 		for p in range(pos_min, pos_max):
 			for w in range(whmin, whmax):
 				matrix[w][p][z_max] = (20,0)
-
-	return matrix
-
-def generateWindowsDeprecated(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
-	window_height = h_max - int((h_max - h_min)/1.5)
-
-	if random.random() < 0.75:
-		pos = random.randint(z_min+2,z_max-2)
-		matrix[window_height][x_min][pos] = (20,0)
-		matrix[window_height-1][x_min][pos] = (20,0)
-		matrix[window_height][x_min][pos+1] = (20,0)
-		matrix[window_height-1][x_min][pos+1] = (20,0)
-	elif random.random() < 0.75:
-		pos = random.randint(x_min+2,x_max-2)
-		matrix[window_height][pos][z_min] = (20,0)
-		matrix[window_height-1][pos][z_min] = (20,0)
-		matrix[window_height][pos+1][z_min] = (20,0)
-		matrix[window_height-1][pos+1][z_min] = (20,0)
-	elif random.random() < 0.75:
-		pos = random.randint(z_min+2,z_max-2)
-		matrix[window_height][x_max][pos] = (20,0)
-		matrix[window_height-1][x_max][pos] = (20,0)
-		matrix[window_height][x_max][pos+1] = (20,0)
-		matrix[window_height-1][x_max][pos+1] = (20,0)
-	elif random.random() < 0.75:
-		pos = random.randint(x_min+2,x_max-2)
-		matrix[window_height][pos][z_max] = (20,0)
-		matrix[window_height-1][pos][z_max] = (20,0)
-		matrix[window_height][pos+1][z_max] = (20,0)
-		matrix[window_height-1][pos+1][z_max] = (20,0)
 
 	return matrix

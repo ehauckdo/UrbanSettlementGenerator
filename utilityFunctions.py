@@ -177,3 +177,8 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 	np = (point[0], point[1], point[2])
 	output.append(np)
 	return output
+
+# generate and return 3d matrix as in the format matrix[h][w][d] 
+def generateMatrix(width, depth, height, options):
+	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
+	return matrix

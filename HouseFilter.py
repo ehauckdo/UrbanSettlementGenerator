@@ -4,7 +4,7 @@ import random
 import math
 from BinarySpacePartitioning import binarySpacePartitioning
 from HouseGenerator import houseGenerator, generateHouse
-from MultistoreyBuildingGenerator import buildingGenerator
+from MultistoreyBuildingGenerator import buildingGenerator, generateBuilding
 
 inputs = (
 	("House Generator", "label"),
@@ -18,20 +18,17 @@ inputs = (
 
 def perform(level, box, options):
 	
-	#pavementGround(level,box,options)
+	pavementGround(level,box,options)
 	settlementGenerator(level,box,options)
 	#houseGenerator(level,box,options)
 	#buildingGenerator(level,box,options)
 	return
 
-def generateMatrix(width, depth, height, options):
-	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
-	return matrix
 
 
 def pavementGround(level,box,options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	matrix = generateMatrix(width,depth,height,options)
+	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 
 	for x in range(0,width):
 		for z in range(0,depth):
@@ -43,19 +40,20 @@ def pavementGround(level,box,options):
 				if matrix[h][w][d] != (0,0):
 					utilityFunctions.setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
 
-def settlementGenerator(level,box,options, min_h=10):
+def settlementGenerator(level,box,options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	matrix = generateMatrix(width,depth,height,options)
-
-	min_h = height - int(height*0.2)
+	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 	
 	partitions = binarySpacePartitioning(0, width-1, 0, depth-1, [])
 	
 	for p in partitions:
 		print(p[0],p[1],p[2],p[3])
-		h = random.randint(min_h, height)
+		
 		if random.random() > 0.5:
-			generateHouse(matrix, 0, h-1, p[0],p[1],p[2],p[3], options)
+			if random.random() > 0.8:
+				matrix = generateBuilding(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
+			else:
+				matrix = generateHouse(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
 
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
