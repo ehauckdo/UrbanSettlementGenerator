@@ -49,10 +49,10 @@ def settlementGenerator(level,box,options):
 		
 		if random.random() > 0.5:
 			if random.random() > 0.8:
-				matrix = generateBuilding(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
+				generateBuilding(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
 			else:
 				#p = utilityFunctions.getSubsection(p[0],p[1],p[2],p[3], 0.5)
-				matrix = generateHouse(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
+				generateHouse(matrix, 0, height-1, p[0],p[1],p[2],p[3], options)
 
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):

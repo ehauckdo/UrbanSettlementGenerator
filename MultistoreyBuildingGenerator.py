@@ -22,7 +22,7 @@ def buildingGenerator(level,box,options, min_h=20, min_w=8, min_d=8):
 	print("h: "+str(h)+", w: "+str(w)+", d: "+str(d))
 
 	#generateHouse(matrix, 0, h-1, initial_x, initial_x+w-1, initial_z, initial_z+d-1, options)
-	matrix = generateBuilding(matrix, 0, height-1, 0, width-1, 0, depth-1, options)
+	generateBuilding(matrix, 0, height-1, 0, width-1, 0, depth-1, options)
 
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
@@ -45,11 +45,9 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	while (h_max-h_min) % floor_size != 0:
 		h_max -= 1
 
-	matrix = generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
-	matrix = generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
-	matrix = generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
-
-	return matrix
+	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
 
 def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 
@@ -73,8 +71,6 @@ def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min,
 				matrix[cur_floor][x][z] = wall
 
 		cur_floor += floor_size
-
-	return matrix
 
 def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
 	z_window_size = z_max-random.randint(z_min+2, z_max-2)
@@ -114,8 +110,6 @@ def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_mi
 		 	matrix[window_h-1][x_max][z+1] = (20,0)
 
 		cur_floor += floor_size
-	return matrix
-
 
 def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
@@ -136,5 +130,3 @@ def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door
 		pos = random.randint(x_min+1,x_max-1)
 		matrix[h_min+2][pos][z_max] = (71,8)
 		matrix[h_min+1][pos][z_max] = (71,3)
-
-	return matrix
