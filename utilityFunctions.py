@@ -183,6 +183,7 @@ def generateMatrix(width, depth, height, options):
 	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
 	return matrix
 
+# get a subsection of a give arean partition based on the percentage
 def getSubsection(x_min, x_max, z_min, z_max, percentage=0.8):
 
 	width = x_max - x_min
@@ -203,3 +204,20 @@ def getSubsection(x_min, x_max, z_min, z_max, percentage=0.8):
 	subsection_z_max = z_mid + subsection_z_mid
 
 	return (subsection_x_min, subsection_x_max, subsection_z_min, subsection_z_max)
+
+# from a list of partitions in the format of (x_min, x_max, z_min, z_max)
+# return the partition with the biggest area in the list
+def getBiggestPartition(partitions):
+	biggestArea = 0
+	biggestPartition = None
+	for p in partitions:
+		width = p[1] - p[0]
+		depth =  p[3] - p[2]
+		area = width * depth
+		print(area, width, depth)
+		if area > biggestArea:
+			biggestArea = area
+			biggestPartition = p
+	print(biggestArea)
+	return biggestPartition
+
