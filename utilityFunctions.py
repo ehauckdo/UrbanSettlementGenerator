@@ -221,3 +221,18 @@ def getBiggestPartition(partitions):
 	print(biggestArea)
 	return biggestPartition
 
+# subtract inner partition from outer and return 4 partitions as the result
+def subtractPartition(outer, inner):
+	print(outer,inner)
+
+	p1 = (outer[0], inner[0], outer[2], inner[3])
+	p2 = (inner[0], outer[1], outer[2], inner[2])
+	p3 = (inner[1], outer[1], inner[2], outer[3])
+	p4 = (outer[0], inner[1], inner[3], outer[3])
+
+	print(p1)
+	print(p2)
+	print(p3)
+	print(p4)
+
+	return (p1,p2,p3,p4)
