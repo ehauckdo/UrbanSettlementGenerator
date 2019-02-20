@@ -34,7 +34,9 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	if h_max-h_min < 10 or x_max-x_min < 8 or z_max-z_min < 8:
 		return 
 
-	h_max = 15 if h_max > 15 else h_max
+	if h_max-h_min > 15: 
+		h_max = h_min+15
+	#h_max = 15 if h_max > 15 else h_max
 	
 	wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))

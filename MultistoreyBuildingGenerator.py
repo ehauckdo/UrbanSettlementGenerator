@@ -37,6 +37,26 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 		return matrix
 
 	wall = (43,random.randint(0,8))
+	#wall = (43,15)
+	ceiling = wall
+	floor = wall
+	door = (0,0)
+
+	floor_size = 8
+	while (h_max-h_min) % floor_size != 0:
+		h_max -= 1
+
+	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
+
+def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
+
+	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
+		return matrix
+
+	#wall = (43,random.randint(0,8))
+	wall = (43,15)
 	ceiling = wall
 	floor = wall
 	door = (0,0)

@@ -46,6 +46,16 @@ def drillDown(level, x, z, miny, maxy):
 		blocks.append(level.blockAt(x, y, z))
 		# print level.blockAt(x,y,z)
 	return blocks
+
+# Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
+def findTerrain(level, x, z, miny, maxy):
+	blocks = []
+	for y in xrange(miny, maxy):
+		#print("y: ", y, " block: ", level.blockAt(x, y, z))
+		if level.blockAt(x, y, z) == 0:
+			return y-1
+		# print level.blockAt(x,y,z)
+	return -1
 	
 # returns a 2d matrix representing tree trunk locations on an x-z coordinate basis (bird's eye view) in the given box
 # *params*
@@ -236,3 +246,30 @@ def subtractPartition(outer, inner):
 	print(p4)
 
 	return (p1,p2,p3,p4)
+
+
+def getEuclidianDistancePartitions(p1, p2):
+	
+	p1_center = (p1[0] + int((p1[1]-p1[0])*0.5), p1[2] + int((p1[3]-p1[2])*0.5))
+	p2_center = (p2[0] + int((p2[1]-p2[0])*0.5), p2[2] + int((p2[3]-p2[2])*0.5))
+	print("EuclidianDistance: ")
+	print(p1_center)
+	print(p2_center)
+	euclidian_distance = getEuclidianDistance(p1_center,p2_center)
+	print(euclidian_distance)
+	return euclidian_distance
+
+def getEuclidianDistance(p1,p2):
+	distance = math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2))
+	return distance
+
+
+# Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
+def drillDown(level,box):
+	(width, height, depth) = utilityFunctions.getBoxSize(box)
+	blocks = []
+	for y in xrange(maxy, miny, -1):
+		blocks.append(level.blockAt(x, y, z))
+		# print level.blockAt(x,y,z)
+	return blocks
+
