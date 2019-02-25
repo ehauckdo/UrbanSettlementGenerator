@@ -47,7 +47,7 @@ def drillDown(level, x, z, miny, maxy):
 		# print level.blockAt(x,y,z)
 	return blocks
 
-# Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
+# Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrain(level, x, z, miny, maxy):
 	blocks = []
 	for y in xrange(miny, maxy):
@@ -273,6 +273,93 @@ def drillDown(level,box):
 		# print level.blockAt(x,y,z)
 	return blocks
 
+# algorithm to randomly find flat areas given a height map
+def getAreasSameHeight(box,terrain):
+	validAreas = []
+
+	for i in range(0, 1000):
+		random_x = random.randint(0, box.maxx-box.minx)
+		random_z = random.randint(0,box.maxz-box.minz)
+		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, 10, 10):
+			newValidArea = (random_x, random_x+9, random_z, random_z+9)
+			if newValidArea not in validAreas:
+				validAreas.append(newValidArea)
+
+	print("Valid areas found:")
+	validAreas = removeOverlaping(validAreas)
+	for a in validAreas:
+		print(a)
+
+	return validAreas
+
+# given a box selection, returns a 2d matrix where each element is
+# the height of the first non-block air in that x, z position
+def getHeightMap(level, box):
+	terrain = [[0 for z in range(box.minz,box.maxz)] for x in range(box.minx,box.maxx)]
+	
+	for d, z in zip(range(box.minz,box.maxz), range(0, box.maxz-box.minz)):
+		for w, x in zip(range(box.minx,box.maxx), range(0, box.maxx-box.minx)):
+			terrain[x][z] = findTerrain(level, w, d, box.miny, box.maxy)
+
+	print("Terrain Map: ")
+	for x in range(0, box.maxx-box.minx):
+		print(terrain[x])
+
+	return terrain
+
+def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
+	# sample testing
+	print("Testing if valid area starting in ", random_x, random_z)
+	print("limits of matrix: ", minx, maxx, minz, maxz)
+
+	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[minx][minz] == -1:
+		return False
+
+	initial_value = terrain[random_x][random_z]
+
+	for x in range(random_x, random_x + mininum_w):
+		for z in range(random_z, random_z + mininum_d):
+			print("Checking x, z: ", x, z)
+			if terrain[x][z] != initial_value:
+				return False
+
+	return True
+
+# receives a list of areas in the format (x_min, x_max, z_min, z_max)
+# returns the same list minus any overlaping areas
+def removeOverlaping(areas):
+	if len(areas) == 0: return areas
+
+	# get the first area from the list as a valid area
+	validAreas = areas[:1]
+	areas = areas[1:]
+
+	for i in range(len(areas)):
+		current_area = areas[0]
+		for index, a in enumerate(validAreas):
+			if intersectRect(current_area, a):
+				break 
+		else:
+			validAreas.append(current_area)
+		areas = areas[1:]
+
+	return validAreas
+
+# returns whether or not 2 partitions are colliding, must be in the format
+# (x_min, x_max, z_min, z_max)
+def intersectRect(p1, p2):
+    return not (p2[0] >= p1[1] or p2[1] <= p1[0] or p2[3] <= p1[2] or p2[2] >= p1[3])
+
+# update the minecraft world given a matrix with h,w,d dimensions, and each element in the
+# (x, y) format, where x is the ID of the block and y the subtype
+def updateWorld(level, box, matrix, height, width, depth):
+	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
+		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
+			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
+				if matrix[h][w][d] != (0,0):
+					setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
+
+#print a matrix given its h,w,d dimensions
 def printMatrix(matrix, height, width, depth):
 	for h in range(0,height):
 		print("matrix at height: ", h)
