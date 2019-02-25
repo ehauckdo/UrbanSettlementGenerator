@@ -37,6 +37,8 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	if h_max-h_min > 15: 
 		h_max = h_min+15
 	#h_max = 15 if h_max > 15 else h_max
+
+	print("h_min", h_min, "h_max", h_max)
 	
 	wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
@@ -44,6 +46,7 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	door = (0,0)
 
 	ceiling_bottom = h_max -int((h_max-h_min) * 0.5)
+	print("ceiling_bottom", ceiling_bottom)
 
 	walls_pos = [x_min+1, x_max-1, z_min+1, z_max-1]
 
@@ -81,13 +84,17 @@ def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_m
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
+	#print("Recursive step ", recr)
+	#print("h_min", h_min,"h_max", h_max,"x_min", x_min, "h_max", x_max, "z_min", z_min,"z_max", z_max)
 	if x_min+recr+1 <= x_max-recr-1:
 		for z in range(z_min, z_max+1):					  # intended pitched roof effect
+			#print("testing z ", z)
 			matrix[h_min+recr][x_min+recr][z] = ceiling   #       _  
 			matrix[h_min+recr][x_max-recr][z] = ceiling   #     _| |_
 			matrix[h_min+recr][x_min+recr+1][z] = ceiling #   _|     |_
 			matrix[h_min+recr][x_max-recr-1][z] = ceiling # _|         |_
 		for x in range(x_min+recr+2, x_max-recr-1):
+			#print("testing x ", x)
 			matrix[h_min+recr][x][z_min+1] = wall
 			matrix[h_min+recr][x][z_max-1] = wall
 
@@ -103,13 +110,17 @@ def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 
 def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
+	#print("Recursive step ", recr)
+	#print("h_min", h_min,"h_max", h_max,"x_min", x_min, "h_max", x_max, "z_min", z_min,"z_max", z_max)
 	if z_min+recr+1 <= z_max-recr-1:
 		for x in range(x_min, x_max+1):
+			#print("testing x ", x)
 			matrix[h_min+recr][x][z_min+recr] = ceiling
 			matrix[h_min+recr][x][z_max-recr] = ceiling
 			matrix[h_min+recr][x][z_min+recr+1] = ceiling
 			matrix[h_min+recr][x][z_max-recr-1] = ceiling
 		for z in range(z_min+recr+2, z_max-recr-1):
+			#print("testing z ", z)
 			matrix[h_min+recr][x_min+1][z] = wall
 			matrix[h_min+recr][x_max-1][z] = wall
 

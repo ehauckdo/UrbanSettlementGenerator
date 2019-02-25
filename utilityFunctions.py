@@ -273,3 +273,9 @@ def drillDown(level,box):
 		# print level.blockAt(x,y,z)
 	return blocks
 
+def printMatrix(matrix, height, width, depth):
+	for h in range(0,height):
+		print("matrix at height: ", h)
+		for x in range(0,width):
+			print(matrix[h][x])
+
