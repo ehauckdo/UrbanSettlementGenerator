@@ -45,7 +45,9 @@ def fillAreas(level,box,options,validAreas,terrain):
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
 	
 def convertHeightCoordinates(box,max_h, height):
+	print("Height: ", height)
 	for y, h in zip(range(box.miny,box.maxy), range(0,max_h)):
+		print(y, h)
 		if y == height:
 			return h
 

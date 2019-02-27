@@ -3,40 +3,30 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 
-def houseGenerator(level,box,options, min_h=10, min_w=8, min_d=8):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
-
-	if height < min_h or width < min_w or depth < min_d:
-		return 
-
-	h = random.randint(min_h, height)
-	w = random.randint(min_w, width)
-	d = random.randint(min_d, depth)
-
-	initial_x = (width/2)-(w/2)
-	initial_z = (depth/2)-(d/2)
-
-	print("height: "+str(height)+", width: "+str(width)+", depth: "+str(depth))
-	print("initial_x: "+str(initial_x)+", initial_z: "+str(initial_z))
-	print("h: "+str(h)+", w: "+str(w)+", d: "+str(d))
-
-	generateHouse(matrix, 0, h-1, initial_x, initial_x+w-1, initial_z, initial_z+d-1, options)
-
-	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
-		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
-			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-				if matrix[h][w][d] != (0,0):
-					utilityFunctions.setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
-
 def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
+
 
 	if h_max-h_min < 10 or x_max-x_min < 8 or z_max-z_min < 8:
 		return 
 
-	if h_max-h_min > 15: 
-		h_max = h_min+15
-	#h_max = 15 if h_max > 15 else h_max
+	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
+	generateFence(matrix, h_min+1, x_min, x_max, z_min, z_max)
+
+	house_size_x = random.randint(10, 14)
+	if x_max-x_min > house_size_x:
+		x_mid = x_min + (x_max-x_min)/2
+		x_min = x_mid - house_size_x/2
+		x_max = x_mid + house_size_x/2
+
+	house_size_z = random.randint(10, 14)
+	if z_max-z_min > house_size_z:
+		z_mid = z_min + (z_max-z_min)/2
+		z_min = z_mid - house_size_z/2
+		z_max = z_mid + house_size_z/2
+
+	house_size_h = (house_size_x+house_size_z)/2
+	if h_max-h_min > 15 or h_max-h_min > house_size_h: 
+		h_max = h_min+ ((house_size_x+house_size_z)/2)
 
 	print("h_min", h_min, "h_max", h_max)
 	
@@ -63,10 +53,25 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 		generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
 		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
 
+	
+def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+	for h in range(h_min, h_max):
+		for x in range(x_min, x_max+1):
+			for z in range(z_min, z_max+1):
+				matrix[h][x][z] = (0,0)
+
 def generateFloor(matrix, h, x_min, x_max, z_min, z_max, floor):
 	for x in range(x_min, x_max+1):
 		for z in range(z_min, z_max+1):
 			matrix[h][x][z] = floor
+
+def generateFence(matrix, h, x_min, x_max, z_min, z_max):
+	for x in range(x_min, x_max+1):
+		matrix[h][x][z_max] = (85,0)
+		matrix[h][x][z_min] = (85,0)
+	for z in range(z_min, z_max+1):
+		matrix[h][x_max][z] = (85,0)
+		matrix[h][x_min][z] = (85,0)
 
 def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, wall):
 

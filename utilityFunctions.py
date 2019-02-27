@@ -57,6 +57,25 @@ def findTerrain(level, x, z, miny, maxy):
 		# print level.blockAt(x,y,z)
 	return -1
 	
+
+# Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
+def findTerrainNew(level, x, z, miny, maxy):
+	air_like = [0, 6, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175]
+	ground_like = [1, 2, 3]
+	water_like = []
+
+	blocks = []
+	for y in xrange(maxy, miny-1, -1):
+		#print("y: ", y, " block: ", level.blockAt(x, y, z))
+		if level.blockAt(x, y, z) in air_like:
+			continue
+		else:
+			return y
+		#elif level.blockAt(x, y, z) in ground_like:
+		#	return y
+		# print level.blockAt(x,y,z)
+	return -1
+
 # returns a 2d matrix representing tree trunk locations on an x-z coordinate basis (bird's eye view) in the given box
 # *params*
 # level: the minecraft world level
@@ -190,7 +209,7 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 
 # generate and return 3d matrix as in the format matrix[h][w][d] 
 def generateMatrix(width, depth, height, options):
-	matrix = [[[(0,0) for z in range(depth)] for x in range(width)] for y in range(height)]		
+	matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]		
 	return matrix
 
 # get a subsection of a give arean partition based on the percentage
@@ -280,8 +299,10 @@ def getAreasSameHeight(box,terrain):
 	for i in range(0, 1000):
 		random_x = random.randint(0, box.maxx-box.minx)
 		random_z = random.randint(0,box.maxz-box.minz)
-		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, 10, 10):
-			newValidArea = (random_x, random_x+9, random_z, random_z+9)
+		size_x = 15
+		size_z = 15
+		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, size_x, size_z):
+			newValidArea = (random_x, random_x+size_x-1, random_z, random_z+size_z-1)
 			if newValidArea not in validAreas:
 				validAreas.append(newValidArea)
 
@@ -299,7 +320,7 @@ def getHeightMap(level, box):
 	
 	for d, z in zip(range(box.minz,box.maxz), range(0, box.maxz-box.minz)):
 		for w, x in zip(range(box.minx,box.maxx), range(0, box.maxx-box.minx)):
-			terrain[x][z] = findTerrain(level, w, d, box.miny, box.maxy)
+			terrain[x][z] = findTerrainNew(level, w, d, box.miny, box.maxy)
 
 	print("Terrain Map: ")
 	for x in range(0, box.maxx-box.minx):
@@ -309,17 +330,17 @@ def getHeightMap(level, box):
 
 def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
 	# sample testing
-	print("Testing if valid area starting in ", random_x, random_z)
-	print("limits of matrix: ", minx, maxx, minz, maxz)
+	#print("Testing if valid area starting in ", random_x, random_z)
+	#print("limits of matrix: ", minx, maxx, minz, maxz)
 
-	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[minx][minz] == -1:
+	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[random_x][random_z] == -1:
 		return False
 
 	initial_value = terrain[random_x][random_z]
 
 	for x in range(random_x, random_x + mininum_w):
 		for z in range(random_z, random_z + mininum_d):
-			print("Checking x, z: ", x, z)
+			#print("Checking x, z: ", x, z)
 			if terrain[x][z] != initial_value:
 				return False
 
@@ -356,7 +377,7 @@ def updateWorld(level, box, matrix, height, width, depth):
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
 			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-				if matrix[h][w][d] != (0,0):
+				if matrix[h][w][d] != None:
 					setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
 
 #print a matrix given its h,w,d dimensions

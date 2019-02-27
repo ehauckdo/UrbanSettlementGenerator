@@ -3,34 +3,6 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 
-def buildingGenerator(level,box,options, min_h=20, min_w=8, min_d=8):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
-
-	if height < min_h or width < min_w or depth < min_d:
-		return
-
-	h = random.randint(min_h, height)
-	w = random.randint(min_w, width)
-	d = random.randint(min_d, depth)
-
-	initial_x = (width/2)-(w/2)
-	initial_z = (depth/2)-(d/2)
-
-	print("height: "+str(height)+", width: "+str(width)+", depth: "+str(depth))
-	print("initial_x: "+str(initial_x)+", initial_z: "+str(initial_z))
-	print("h: "+str(h)+", w: "+str(w)+", d: "+str(d))
-
-	#generateHouse(matrix, 0, h-1, initial_x, initial_x+w-1, initial_z, initial_z+d-1, options)
-	generateBuilding(matrix, 0, height-1, 0, width-1, 0, depth-1, options)
-
-	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
-		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
-			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-				if matrix[h][w][d] != (0,0):
-					utilityFunctions.setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
-
-
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
