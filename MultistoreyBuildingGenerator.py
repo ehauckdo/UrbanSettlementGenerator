@@ -5,6 +5,13 @@ import math
 
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
+	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
+
+	x_min += 3
+	x_max -= 3
+	z_min += 3
+	z_max -= 3
+
 	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
 		return matrix
 
@@ -23,6 +30,14 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
 
 def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
+
+	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
+
+	hospitalPartition = utilityFunctions.getSubsection(x_min, x_max, z_min, z_max, 0.8)
+	x_min = hospitalPartition[0]
+	x_max = hospitalPartition[1]
+	z_min = hospitalPartition[2]
+	z_max = hospitalPartition[3]
 
 	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
 		return matrix
@@ -122,3 +137,9 @@ def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door
 		pos = random.randint(x_min+1,x_max-1)
 		matrix[h_min+2][pos][z_max] = (71,8)
 		matrix[h_min+1][pos][z_max] = (71,3)
+
+def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+	for h in range(h_min, h_max):
+		for x in range(x_min, x_max+1):
+			for z in range(z_min, z_max+1):
+				matrix[h][x][z] = (0,0)
