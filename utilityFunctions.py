@@ -60,12 +60,12 @@ def findTerrain(level, x, z, miny, maxy):
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrainNew(level, x, z, miny, maxy):
-	air_like = [0, 6, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175]
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175]
 	ground_like = [1, 2, 3]
 	water_like = []
 
 	blocks = []
-	for y in xrange(maxy, miny-1, -1):
+	for y in xrange(maxy-1, miny-1, -1):
 		#print("y: ", y, " block: ", level.blockAt(x, y, z))
 		if level.blockAt(x, y, z) in air_like:
 			continue
@@ -209,7 +209,7 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 
 # generate and return 3d matrix as in the format matrix[h][w][d] 
 def generateMatrix(width, depth, height, options):
-	matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]		
+	matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
 	return matrix
 
 # get a subsection of a give arean partition based on the percentage
@@ -252,20 +252,13 @@ def getBiggestPartition(partitions):
 
 # subtract inner partition from outer and return 4 partitions as the result
 def subtractPartition(outer, inner):
-	print(outer,inner)
 
 	p1 = (outer[0], inner[0], outer[2], inner[3])
 	p2 = (inner[0], outer[1], outer[2], inner[2])
 	p3 = (inner[1], outer[1], inner[2], outer[3])
 	p4 = (outer[0], inner[1], inner[3], outer[3])
 
-	print(p1)
-	print(p2)
-	print(p3)
-	print(p4)
-
 	return (p1,p2,p3,p4)
-
 
 def getEuclidianDistancePartitions(p1, p2):
 	
@@ -291,6 +284,12 @@ def drillDown(level,box):
 		blocks.append(level.blockAt(x, y, z))
 		# print level.blockAt(x,y,z)
 	return blocks
+
+def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+	for h in range(h_min, h_max):
+		for x in range(x_min, x_max+1):
+			for z in range(z_min, z_max+1):
+				matrix[h][x][z] = (0,0)
 
 # algorithm to randomly find flat areas given a height map
 def getAreasSameHeight(box,terrain):
@@ -346,6 +345,51 @@ def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum
 
 	return True
 
+
+def getFloodFill(matrix, x_min, x_max, z_min, z_max, random_x, random_z, floodSize):
+
+	initial_value = matrix[random_x][random_z]
+
+	flood_minx = flood_maxx = random_x
+	flood_minz = flood_maxz = random_z
+	
+	for i in range(floodSize+1):
+
+		if random_x - i >= x_min:
+			flood_minx = random_x - i
+
+		if random_x + i <= x_max:
+			flood_maxx = random_x + i
+
+		if random_z - i >= z_min:
+			flood_minz = random_z - i
+
+		if random_z + i <= z_max:
+			flood_maxz = random_z + i
+
+	return (flood_minx, flood_maxx, flood_minz, flood_maxz)
+
+def getScoreArea(height_map, min_x, max_x, min_z, max_z, initial_value):
+	
+	value = 0
+	for x in range(min_x, max_x+1):
+		for z in range(min_z, max_z+1):
+			value += abs(initial_value - height_map[x][z])
+  	return value
+
+def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
+	flood_values = {}
+	for x in range(min_x, max_x+1):
+		for z in range(min_z, max_z+1):
+			value = matrix[x][z]
+			if value not in flood_values.keys():
+				flood_values[value] = 1
+			else:
+				flood_values[value] += 1
+	return flood_values
+
+
+
 # receives a list of areas in the format (x_min, x_max, z_min, z_max)
 # returns the same list minus any overlaping areas
 def removeOverlaping(areas):
@@ -378,7 +422,10 @@ def updateWorld(level, box, matrix, height, width, depth):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
 			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
 				if matrix[h][w][d] != None:
-					setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
+					try:
+						setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
+					except:
+						setBlock(level, (matrix[h][w][d], 0), x, y, z)
 
 #print a matrix given its h,w,d dimensions
 def printMatrix(matrix, height, width, depth):
@@ -387,3 +434,41 @@ def printMatrix(matrix, height, width, depth):
 		for x in range(0,width):
 			print(matrix[h][x])
 
+def twoway_range(start, stop):
+	return range(start, stop+1, 1) if (start <= stop) else range(start, stop-1, -1)
+
+def convertHeightCoordinates(box,max_h, height):
+	for y, h in zip(range(box.miny,box.maxy), range(0,max_h)):
+		if y == height:
+			print("Converted Box height ", height, " to ", h)
+			return h
+	print("FAILED TO CONVERT BOX HEIGHT ", height)
+
+def convertWidthCoordinates(box,max_x, width):
+	for x, w in zip(range(box.minx,box.maxx), range(0,max_x)):
+		if x == width:
+			print("Converted Box width ", width, " to ", w)
+			return w
+	print("FAILED TO CONVERT BOX WIDTH ", width)
+
+def convertDepthCoordinates(box,max_z, depth):
+	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
+		if z == depth:
+			print("Converted Box depth ", depth, " to ", d)
+			return d
+	print("FAILED TO CONVERT BOX DEPTH ", depth)
+
+def convertHeightMatrixToBox(box, max_y, height):
+	for y, h in zip(range(box.miny,box.maxy), range(0,max_y)):
+		if h == height:
+			return y
+
+def convertWidthMatrixToBox(box, max_x, width):
+	for x, w in zip(range(box.minx,box.maxx), range(0,max_x)):
+		if w == width:
+			return x
+
+def convertDepthMatrixToBox(box, max_z, depth):
+	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
+		if d == depth:
+			return z
