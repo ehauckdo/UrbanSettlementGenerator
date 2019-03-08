@@ -28,15 +28,17 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	if h_max-h_min > 15 or h_max-h_min > house_size_h: 
 		h_max = h_min+ ((house_size_x+house_size_z)/2)
 
-	print("h_min", h_min, "h_max", h_max)
+	#print("h_min", h_min, "h_max", h_max)
 	
-	wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
-	ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
+	#wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
+	#ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
+	wall = (43, random.randint(11,15))
+	ceiling = (5, random.randint(1,5))
 	floor = wall
 	door = (0,0)
 
 	ceiling_bottom = h_max -int((h_max-h_min) * 0.5)
-	print("ceiling_bottom", ceiling_bottom)
+	#print("ceiling_bottom", ceiling_bottom)
 
 	walls_pos = [x_min+1, x_max-1, z_min+1, z_max-1]
 
@@ -52,6 +54,8 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 		generateDoor_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
 		generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
 		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
+
+	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3])
 
 	
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
@@ -86,6 +90,34 @@ def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_m
 		for y in range(h_min, ceiling_bottom):
 			matrix[y][x_max][z] = wall
 			matrix[y][x_min][z] = wall
+
+def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
+	
+	# bed
+	matrix[h_min+1][x_max-1][z_min+1] = (26,11)
+	matrix[h_min+1][x_max-2][z_min+1] = (26,3)
+
+	x_mid = x_max - int((x_max - x_min)/2)
+	z_mid = z_max - int((z_max - z_min)/2)
+
+	# table
+	matrix[h_min+1][x_mid][z_mid] = (85,0)
+	matrix[h_min+2][x_mid][z_mid] = (72,0)
+	matrix[h_min+1][x_mid-1][z_mid] = (53, 1)
+	matrix[h_min+1][x_mid+1][z_mid] = (53, 0)
+
+	# bookshelf
+	matrix[h_min+1][x_max-1][z_max-1] = (47,0)
+	matrix[h_min+1][x_max-2][z_max-1] = (47,0)
+	matrix[h_min+2][x_max-1][z_max-1] = (47,0)
+	matrix[h_min+2][x_max-2][z_max-1] = (47,0)
+
+	# couch
+	matrix[h_min+1][x_min+4][z_max-1] = (68, 5)
+	matrix[h_min+1][x_min+3][z_max-1] = (53, 2)
+	matrix[h_min+1][x_min+2][z_max-1] = (53, 2)
+	matrix[h_min+1][x_min+1][z_max-1] = (68, 4)
+
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 

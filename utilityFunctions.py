@@ -60,15 +60,17 @@ def findTerrain(level, x, z, miny, maxy):
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrainNew(level, x, z, miny, maxy):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175]
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78]
 	ground_like = [1, 2, 3]
-	water_like = []
+	water_like = [8, 9, 10, 11]
 
 	blocks = []
 	for y in xrange(maxy-1, miny-1, -1):
 		#print("y: ", y, " block: ", level.blockAt(x, y, z))
 		if level.blockAt(x, y, z) in air_like:
 			continue
+		elif level.blockAt(x, y, z) in water_like:
+			return -1
 		else:
 			return y
 		#elif level.blockAt(x, y, z) in ground_like:
@@ -312,6 +314,28 @@ def getAreasSameHeight(box,terrain):
 
 	return validAreas
 
+
+def hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map):
+	
+	for x in range(x_min, x_max):
+		for z in range(z_min, z_max):
+			if height_map[x][z] == -1:
+				return False
+	return True
+
+def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max):
+
+	if y_max-y_min < 4 or x_max-x_min < 8 or z_max-z_min < 8:
+		return False
+	return True
+
+def hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, scoring_function, threshold = 100):
+	initial_value = height_map[x_min][z_min]
+	score = scoring_function(height_map, x_min, x_max, z_min , z_max , initial_value)
+	if score > threshold:
+		return False
+	return True
+
 # given a box selection, returns a 2d matrix where each element is
 # the height of the first non-block air in that x, z position
 def getHeightMap(level, box):
@@ -321,9 +345,9 @@ def getHeightMap(level, box):
 		for w, x in zip(range(box.minx,box.maxx), range(0, box.maxx-box.minx)):
 			terrain[x][z] = findTerrainNew(level, w, d, box.miny, box.maxy)
 
-	print("Terrain Map: ")
-	for x in range(0, box.maxx-box.minx):
-		print(terrain[x])
+	#print("Terrain Map: ")
+	#for x in range(0, box.maxx-box.minx):
+	#	print(terrain[x])
 
 	return terrain
 
@@ -369,12 +393,34 @@ def getFloodFill(matrix, x_min, x_max, z_min, z_max, random_x, random_z, floodSi
 
 	return (flood_minx, flood_maxx, flood_minz, flood_maxz)
 
-def getScoreArea(height_map, min_x, max_x, min_z, max_z, initial_value):
+
+
+def getScoreArea_type1(height_map, min_x, max_x, min_z, max_z, initial_value):
+	
+	ocurred_values = []
+	value = 0
+	for x in range(min_x, max_x+1):
+		for z in range(min_z, max_z+1):
+			difference = initial_value - height_map[x][z]
+			if difference not in ocurred_values:
+				ocurred_values.append(difference)
+  	return len(ocurred_values)
+
+def getScoreArea_type2(height_map, min_x, max_x, min_z, max_z, initial_value):
 	
 	value = 0
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
 			value += abs(initial_value - height_map[x][z])
+  	return value
+
+def getScoreArea_type3(height_map, min_x, max_x, min_z, max_z, initial_value):
+	
+	value = 0
+	for x in range(min_x, max_x+1):
+		for z in range(min_z, max_z+1):
+
+			value += (abs(initial_value - height_map[x][z]))**2
   	return value
 
 def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
@@ -440,23 +486,23 @@ def twoway_range(start, stop):
 def convertHeightCoordinates(box,max_h, height):
 	for y, h in zip(range(box.miny,box.maxy), range(0,max_h)):
 		if y == height:
-			print("Converted Box height ", height, " to ", h)
+			#print("Converted Box height ", height, " to ", h)
 			return h
-	print("FAILED TO CONVERT BOX HEIGHT ", height)
+	#print("FAILED TO CONVERT BOX HEIGHT ", height)
 
 def convertWidthCoordinates(box,max_x, width):
 	for x, w in zip(range(box.minx,box.maxx), range(0,max_x)):
 		if x == width:
-			print("Converted Box width ", width, " to ", w)
+			#print("Converted Box width ", width, " to ", w)
 			return w
-	print("FAILED TO CONVERT BOX WIDTH ", width)
+	#print("FAILED TO CONVERT BOX WIDTH ", width)
 
 def convertDepthCoordinates(box,max_z, depth):
 	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
 		if z == depth:
-			print("Converted Box depth ", depth, " to ", d)
+			#print("Converted Box depth ", depth, " to ", d)
 			return d
-	print("FAILED TO CONVERT BOX DEPTH ", depth)
+	#print("FAILED TO CONVERT BOX DEPTH ", depth)
 
 def convertHeightMatrixToBox(box, max_y, height):
 	for y, h in zip(range(box.miny,box.maxy), range(0,max_y)):

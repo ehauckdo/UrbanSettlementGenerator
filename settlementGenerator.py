@@ -23,28 +23,34 @@ def perform(level, box, options):
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 	height_map = utilityFunctions.getHeightMap(level,box)
 
-	#settlementGenerator(level,box, matrix, height, width, depth, height_map, options)
-	hospitalSettlementGenerator(level, box, matrix, height, width, depth, height_map, options)
+	settlementGenerator(level,box, matrix, height, width, depth, height_map, options)
+	#hospitalSettlementGenerator(level, box, matrix, height, width, depth, height_map, options)
 
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
+
+def perform_test(level, box, options):
+
+	(width, height, depth) = utilityFunctions.getBoxSize(box)
+	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
+	height_map = utilityFunctions.getHeightMap(level,box)
 
 def settlementGenerator(level,box,matrix, height, width, depth, height_map, options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 	
-	partitions = generatePartitions(height, 0, width-1, 0, depth-1, height_map)
+	partitions = generatePartitions(0, height-1, 0, width-1, 0, depth-1, height_map)
 
 	for p in partitions:
-		print(p[0],p[1],p[2],p[3])
+		#print(p[0],p[1],p[2],p[3], p[4], p[5])
 		
 		#if random.random() > 0.5:
 		if random.random() > 0.8:
 			h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
-			generateBuilding(matrix, h, height-1, p[0],p[1],p[2],p[3], options)
+			generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
 		else:
 			#p = utilityFunctions.getSubsection(p[0],p[1],p[2],p[3], 0.5)
 			h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
-			generateHouse(matrix, h, height-1, p[0],p[1],p[2],p[3], options)
+			generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
 
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
 
@@ -57,14 +63,14 @@ def hospitalSettlementGenerator(level, box, matrix, height, width, depth, height
 	hp = partitions[0]
 	h = prepareLot(level, box, matrix, height, width, depth, hp, height_map)
 
-	generateHospital(matrix, h, height-1, hp[0], hp[1],hp[2],hp[3], options)
+	generateHospital(matrix, h, hp[1],hp[2],hp[3], hp[4], hp[5], options)
 
 	for i in range(1, len(partitions)):
 		p = partitions[i]
 		#if random.random() > 0.5:
 		print("Building on partition ", p)
 		h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
-		generateHouse(matrix, h, height-1, p[0],p[1],p[2],p[3], options)
+		generateHouse(matrix, h,p[1],p[2],p[3],p[4],p[5], options)
 
 	return matrix
 
@@ -89,15 +95,15 @@ def hospitalSettlementGeneratePartitioning(height, x_min, x_max, z_min, z_max, h
 
 # Perform earthworks on a given lot, returns the height to start construction
 def prepareLot(level, box, matrix, height, width, depth, p, height_map):
-	areaScore = utilityFunctions.getScoreArea_type1(height_map, p[0], p[1], p[2], p[3], height_map[p[0]][p[2]])
+	areaScore = utilityFunctions.getScoreArea_type1(height_map, p[2],p[3], p[4], p[5], height_map[p[2]][p[4]])
 	#print("Area score: ", areaScore)
 
 	if areaScore != 0:
-		flattened_height = flattenPartition(matrix, level, box, height, width, depth, p[0], p[1], p[2], p[3], height_map)
+		flattened_height = flattenPartition(matrix, level, box, height, width, depth, p[2],p[3], p[4], p[5], height_map)
 		#print("Flattened height: ", flattened_height)
 		h = utilityFunctions.convertHeightCoordinates(box, height, flattened_height)
 	else:
-		heightCounts = utilityFunctions.getHeightCounts(height_map, p[0], p[1], p[2], p[3])
+		heightCounts = utilityFunctions.getHeightCounts(height_map, p[2],p[3], p[4], p[5])
 		most_ocurred_height = max(heightCounts, key=heightCounts.get)
 		#print("Non flattened height: ", most_ocurred_height)
 		h = utilityFunctions.convertHeightCoordinates(box, height, most_ocurred_height)
@@ -131,7 +137,7 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 				#print(x, z, " Different Height!")
 
 				if height_map[x][z] == -1:
-					print("Position ", x, z, " of height_map is -1. Cannot do earthworks.")
+					#print("Position ", x, z, " of height_map is -1. Cannot do earthworks.")
 					continue
 
 				matrix_height = utilityFunctions.convertHeightCoordinates(box, height, height_map[x][z])
@@ -161,11 +167,11 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 
 # Attempts to perform partitioning of a given area number_of_tries times
 # and returns the partitioning with the highest number of valid areas
-def generatePartitions(height, x_min, x_max, z_min, z_max, height_map, number_of_tries=50):
+def generatePartitions(y_min, y_max, x_min, x_max, z_min, z_max, height_map, number_of_tries=50):
 
 	partitioning_list = []
 	for i in range(number_of_tries):
-		partition = generatePartition(height, x_min, x_max, z_min, z_max, height_map)
+		partition = generatePartition(y_min, y_max, x_min, x_max, z_min, z_max, height_map)
 		partitioning_list.append((len(partition), partition))
 
 	partitioning_list = sorted(partitioning_list, reverse=True)
@@ -176,15 +182,14 @@ def generatePartitions(height, x_min, x_max, z_min, z_max, height_map, number_of
 
 	return partitioning_list[0][1]
 
-
 # Perform binary partitioning of a given area between x_min, x_max and
 # z_min, z_max. Returns a list with only valid partitions
-def generatePartition(height, x_min, x_max, z_min, z_max, height_map):
+def generatePartition(y_min, y_max, x_min, x_max, z_min, z_max, height_map):
 	partition = []
-	initial_partitioning = binarySpacePartitioning(x_min, x_max, z_min, z_max, [])
+	initial_partitioning = binarySpacePartitioning(y_min, y_max, x_min, x_max, z_min, z_max, [])
 
 	for p in initial_partitioning:
-		if isValidPartition(p[0], p[1], p[2], p[3], height_map) == True:
+		if isValidPartition(p[0], p[1], p[2], p[3], p[4], p[5], height_map) == True:
 			partition.append(p)
 
 	return partition
@@ -192,17 +197,30 @@ def generatePartition(height, x_min, x_max, z_min, z_max, height_map):
 
 # Check if a partition is valid according to some criteria
 # Returns false if it does not pass one of the criterion
-def isValidPartition(x_min, x_max, z_min, z_max, height_map):
+def isValidPartition(y_min, y_max, x_min, x_max, z_min, z_max, height_map):
 
 	cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
-	if cond1 == False: print("Failed Condition 1!")
-	cond2 = utilityFunctions.hasMinimumSize(x_min, x_max,z_min,z_max)
-	if cond2 == False: print("Failed Condition 2!")
+	#if cond1 == False: print("Failed Condition 1!")
+	cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max)
+	#if cond2 == False: print("Failed Condition 2!")
 	cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1)
-	if cond3 == False: print("Failed Condition 3!")
+	#if cond3 == False: print("Failed Condition 3!")
 		
 	return cond1 and cond2 and cond3
 
+
+# =============================================================
+#			MODUALR FUNCTIONS
+# ============================================================
+
+def generatePartitions_mod(height, x_min, x_max, z_min, z_max, partitionings=50):
+
+	partitioning = []
+	for i in range(partitionings):
+		partition = binarySpacePartitioning(x_min, x_max, z_min, z_max, [])
+		partitioning_list.append(partition)
+
+	return partitioning
 
 #
 # Old function to pavament ground
