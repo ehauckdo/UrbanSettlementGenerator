@@ -4,6 +4,7 @@ from random import *
 from numpy import *
 from pymclevel import alphaMaterials, MCSchematic, MCLevel, BoundingBox
 from mcplatform import *
+from collections import defaultdict
 
 # These are a few helpful functions we hope you find useful to use
 
@@ -209,13 +210,20 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 	output.append(np)
 	return output
 
+# class that allows easy indexing of dicts
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
 # generate and return 3d matrix as in the format matrix[h][w][d] 
 def generateMatrix(width, depth, height, options):
 	matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
 	return matrix
 
 # get a subsection of a give arean partition based on the percentage
-def getSubsection(x_min, x_max, z_min, z_max, percentage=0.8):
+def getSubsection(y_min, y_max, x_min, x_max, z_min, z_max, percentage=0.8):
 
 	width = x_max - x_min
 	x_mid = x_min + int(width/2)
@@ -234,7 +242,7 @@ def getSubsection(x_min, x_max, z_min, z_max, percentage=0.8):
 	subsection_z_min = z_mid - subsection_z_mid
 	subsection_z_max = z_mid + subsection_z_mid
 
-	return (subsection_x_min, subsection_x_max, subsection_z_min, subsection_z_max)
+	return (y_min, y_max, subsection_x_min, subsection_x_max, subsection_z_min, subsection_z_max)
 
 # from a list of partitions in the format of (x_min, x_max, z_min, z_max)
 # return the partition with the biggest area in the list
@@ -252,13 +260,13 @@ def getBiggestPartition(partitions):
 	print(biggestArea)
 	return biggestPartition
 
-# subtract inner partition from outer and return 4 partitions as the result
+# fct inner partition from outer and return 4 partitions as the result
 def subtractPartition(outer, inner):
 
-	p1 = (outer[0], inner[0], outer[2], inner[3])
-	p2 = (inner[0], outer[1], outer[2], inner[2])
-	p3 = (inner[1], outer[1], inner[2], outer[3])
-	p4 = (outer[0], inner[1], inner[3], outer[3])
+	p1 = (outer[0], outer[1], outer[2], inner[2], outer[4], inner[5])
+	p2 = (outer[0], outer[1], inner[2], outer[3], outer[4], inner[4])
+	p3 = (outer[0], outer[1], inner[3], outer[3], inner[4], outer[5])
+	p4 = (outer[0], outer[1], outer[2], inner[3], inner[5], outer[5])
 
 	return (p1,p2,p3,p4)
 
@@ -329,7 +337,7 @@ def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max):
 		return False
 	return True
 
-def hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, scoring_function, threshold = 100):
+def hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, scoring_function, threshold = 5):
 	initial_value = height_map[x_min][z_min]
 	score = scoring_function(height_map, x_min, x_max, z_min , z_max , initial_value)
 	if score > threshold:

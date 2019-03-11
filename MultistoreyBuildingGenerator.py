@@ -34,7 +34,7 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 
 def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
-	print("Generating interior!")
+	#print("Generating interior!")
 	cur_floor = h_min
 	floor = 0
 	while cur_floor <= h_max:
@@ -112,7 +112,7 @@ def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
 		cur_floor += floor_size
 
 def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
-	print("Generating interior!")
+	#print("Generating interior!")
 	cur_floor = h_min
 	floor = 0
 	while cur_floor < h_max:

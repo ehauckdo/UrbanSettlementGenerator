@@ -17,7 +17,7 @@ inputs = (
 	("Ceiling Material Subtype (max)", 5)
 	)
 
-def perform(level, box, options):
+def perform_old(level, box, options):
 
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
@@ -28,11 +28,44 @@ def perform(level, box, options):
 
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
 
-def perform_test(level, box, options):
+def perform(level, box, options):
 
+	# PREPARATION
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 	height_map = utilityFunctions.getHeightMap(level,box)
+	world_space = utilityFunctions.dotdict({"y_min": 0, "y_max": height-1, "x_min": 0, "x_max": width-1, "z_min": 0, "z_max": depth-1})
+
+	# PARTITION SPACE
+	partitioning_list = generatePartitions_mod(world_space)
+	partitioning_list = cleanPartitions_mod(partitioning_list, height_map)
+	partitioning = selectBestPartition_mod(partitioning_list)
+
+	#central_partitioning = getCentralPartition(world_space, height_map)
+	#central_partition = central_partitioning[0]
+
+	#print("Central Partitioning: ")
+	#print(central_partitioning[0])
+
+	#print("Other partitions: ")
+	#for p in central_partitioning:
+	#	print(p)
+
+	#central_space = utilityFunctions.dotdict({"y_min": central_partitioning[0], "y_max": central_partitioning[1], "x_min": central_partitioning[2], "x_max": central_partitioning[3], "z_min": central_partitioning[4], "z_max": central_partitioning[5]})
+	#partitioning_list = generatePartitions_mod(central_space)
+	#partitioning_list = cleanPartitions_mod(partitioning_list, height_map)
+	#partitioning = selectBestPartition_mod(partitioning_list)
+
+	#fillBuildings_mod(level, box, matrix, partitioning, height_map, options)
+	#central_partitioning.pop(0)
+	#fillHouses_mod(level, box, matrix, central_partitioning, height_map, options)
+
+	# BUILDINGS GENERATION
+	settlementGenerator_mod(level, box, matrix, partitioning, height_map, options)
+
+
+	# UPDATE WORLD
+	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
 
 def settlementGenerator(level,box,matrix, height, width, depth, height_map, options):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
@@ -88,6 +121,22 @@ def hospitalSettlementGeneratePartitioning(height, x_min, x_max, z_min, z_max, h
 			partitions.append(p)
 
 	return partitions
+
+def getCentralPartition(space, height_map):
+	partitions = []
+
+	hospitalPartition = utilityFunctions.getSubsection(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, 0.4)
+	partitions.append(hospitalPartition)
+
+	neighbourhoods = utilityFunctions.subtractPartition((space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max), hospitalPartition)
+	for n in neighbourhoods:
+		#neighbourhood_partitioning = binarySpacePartitioning(n[0], n[1], n[2], n[3], [])
+		neighbourhood_partitioning = generatePartition(space.y_min, space.y_max, n[0], n[1], n[2], n[3], height_map)
+		for p in neighbourhood_partitioning:
+			partitions.append(p)
+
+	return partitions
+
 
 # ==========================================================================
 #				# LOT PREPARING FUNCTIONS
@@ -213,14 +262,88 @@ def isValidPartition(y_min, y_max, x_min, x_max, z_min, z_max, height_map):
 #			MODUALR FUNCTIONS
 # ============================================================
 
-def generatePartitions_mod(height, x_min, x_max, z_min, z_max, partitionings=50):
+def generatePartitions_mod(space, number_of_tries=50):
 
-	partitioning = []
-	for i in range(partitionings):
-		partition = binarySpacePartitioning(x_min, x_max, z_min, z_max, [])
-		partitioning_list.append(partition)
+	partitioning_list = []
+	for i in range(number_of_tries):
+		partitioning_list.append(generatePartition_mod(space))
+	#	initial_partitioning = generatePartition_mod(space)
+	#	partitioning = []
 
+	#	for p in initial_partitioning:
+	#		if isValidPartition(p[0], p[1], p[2], p[3], p[4], p[5], height_map) == True:
+	#			partitioning.append(p)
+
+	#	partitioning_list.append((len(partitioning), partitioning))
+
+	#partitioning_list = sorted(partitioning_list, reverse=True)
+
+	#print("Checking all partitions!")
+	#for partitions in partitioning_list:
+	#	print("====== Valid Areas: ", partitions[0])
+
+	#return partitioning_list[0][1]
+	return partitioning_list
+
+def generatePartition_mod(space, partitionings=50):
+
+	partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
 	return partitioning
+
+def cleanPartitions_mod(partitioning_list, height_map):
+	valid_partitioning_list = []
+	for partitioning in partitioning_list:
+		#valid_partitioning = []
+		#for p in partitioning:
+		#	if isValidPartition(p[0], p[1], p[2], p[3], p[4], p[5], height_map) == True:
+		#		valid_partitioning.append(p)
+		valid_partitioning_list.append(cleanPartition_mod(partitioning, height_map))
+	return valid_partitioning_list
+
+def cleanPartition_mod(partitioning, height_map):
+	valid_partitioning = []
+	for p in partitioning:
+		if isValidPartition(p[0], p[1], p[2], p[3], p[4], p[5], height_map) == True:
+			valid_partitioning.append(p)
+	return valid_partitioning
+
+def selectBestPartition_mod(partitioning_list):
+	partitioning_sizes = []
+	for partitioning in partitioning_list:
+		partitioning_sizes.append((len(partitioning), partitioning))
+	partitioning_list = sorted(partitioning_sizes, reverse=True)
+	return partitioning_list[0][1]
+
+def settlementGenerator_mod(level, box, matrix, partitioning, height_map, options):
+	for p in partitioning:
+		#print(p[0],p[1],p[2],p[3], p[4], p[5])
+		
+		#if random.random() > 0.5:
+		if random.random() > 0.8:
+			h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+			generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
+		else:
+			#p = utilityFunctions.getSubsection(p[0],p[1],p[2],p[3], 0.5)
+			h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+			generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
+
+def fillBuildings_mod(level, box, matrix, partitioning, height_map, options):
+	for p in partitioning:
+		#print(p[0],p[1],p[2],p[3], p[4], p[5])
+		
+		#if random.random() > 0.5:
+		
+		h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+		generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
+
+def fillHouses_mod(level, box, matrix, partitioning, height_map, options):
+	for p in partitioning:
+		#print(p[0],p[1],p[2],p[3], p[4], p[5])
+		
+		#if random.random() > 0.5:
+		#p = utilityFunctions.getSubsection(p[0],p[1],p[2],p[3], 0.5)
+		h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+		generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
 
 #
 # Old function to pavament ground
