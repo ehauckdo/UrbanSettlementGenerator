@@ -333,7 +333,7 @@ def hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map):
 
 def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max):
 
-	if y_max-y_min < 4 or x_max-x_min < 8 or z_max-z_min < 8:
+	if y_max-y_min < 4 or x_max-x_min < 15 or z_max-z_min < 15:
 		return False
 	return True
 

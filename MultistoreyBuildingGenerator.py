@@ -3,6 +3,37 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 
+def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
+
+	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
+
+	hospitalPartition = utilityFunctions.getSubsection(x_min, x_max, z_min, z_max, 0.8)
+	x_min = hospitalPartition[0]
+	x_max = hospitalPartition[1]
+	z_min = hospitalPartition[2]
+	z_max = hospitalPartition[3]
+
+	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
+		return matrix
+
+	#wall = (43,random.randint(0,8))
+	wall = (43,15)
+	ceiling = wall
+	floor = wall
+	door = (0,0)
+
+	floor_size = 8
+	if h_max-h_min > 82:
+		h_max = h_min+82
+
+	while (h_max-h_min) % floor_size != 0:
+		h_max -= 1
+
+	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
+	generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
@@ -189,35 +220,7 @@ def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
 	matrix[h_min+1][x_min+2][z_max-1] = (53, 2)
 	matrix[h_min+1][x_min+1][z_max-1] = (68, 4)
 
-def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
-	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
-
-	hospitalPartition = utilityFunctions.getSubsection(x_min, x_max, z_min, z_max, 0.8)
-	x_min = hospitalPartition[0]
-	x_max = hospitalPartition[1]
-	z_min = hospitalPartition[2]
-	z_max = hospitalPartition[3]
-
-	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
-		return matrix
-
-	#wall = (43,random.randint(0,8))
-	wall = (43,15)
-	ceiling = wall
-	floor = wall
-	door = (0,0)
-
-	floor_size = 8
-	if h_max-h_min > 82:
-		h_max = h_min+82
-
-	while (h_max-h_min) % floor_size != 0:
-		h_max -= 1
-
-	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
-	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
-	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
 
 def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 

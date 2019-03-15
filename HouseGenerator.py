@@ -57,6 +57,8 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3])
 
+def getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
+	pass
 	
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	for h in range(h_min, h_max):
