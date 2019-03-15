@@ -5,30 +5,10 @@ import math
 
 def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
-
-	if h_max-h_min < 10 or x_max-x_min < 8 or z_max-z_min < 8:
-		return 
-
 	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 	generateFence(matrix, h_min+1, x_min, x_max, z_min, z_max)
 
-	house_size_x = random.randint(10, 14)
-	if x_max-x_min > house_size_x:
-		x_mid = x_min + (x_max-x_min)/2
-		x_min = x_mid - house_size_x/2
-		x_max = x_mid + house_size_x/2
-
-	house_size_z = random.randint(10, 14)
-	if z_max-z_min > house_size_z:
-		z_mid = z_min + (z_max-z_min)/2
-		z_min = z_mid - house_size_z/2
-		z_max = z_mid + house_size_z/2
-
-	house_size_h = (house_size_x+house_size_z)/2
-	if h_max-h_min > 15 or h_max-h_min > house_size_h: 
-		h_max = h_min+ ((house_size_x+house_size_z)/2)
-
-	#print("h_min", h_min, "h_max", h_max)
+	(h_min, h_max, x_min, x_max, z_min, z_max) = getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
 	
 	#wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	#ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
@@ -58,7 +38,23 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3])
 
 def getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
-	pass
+	house_size_x = random.randint(10, 14)
+	if x_max-x_min > house_size_x:
+		x_mid = x_min + (x_max-x_min)/2
+		x_min = x_mid - house_size_x/2
+		x_max = x_mid + house_size_x/2
+
+	house_size_z = random.randint(10, 14)
+	if z_max-z_min > house_size_z:
+		z_mid = z_min + (z_max-z_min)/2
+		z_min = z_mid - house_size_z/2
+		z_max = z_mid + house_size_z/2
+
+	house_size_h = (house_size_x+house_size_z)/2
+	if h_max-h_min > 15 or h_max-h_min > house_size_h: 
+		h_max = h_min+ ((house_size_x+house_size_z)/2)
+
+	return (h_min, h_max, x_min, x_max, z_min, z_max)
 	
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	for h in range(h_min, h_max):

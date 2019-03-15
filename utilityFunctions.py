@@ -61,7 +61,7 @@ def findTerrain(level, x, z, miny, maxy):
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrainNew(level, x, z, miny, maxy):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78]
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
 	ground_like = [1, 2, 3]
 	water_like = [8, 9, 10, 11]
 

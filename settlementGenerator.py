@@ -6,6 +6,7 @@ import os
 from BinarySpacePartitioning import binarySpacePartitioning
 from HouseGenerator import generateHouse
 from MultistoreyBuildingGenerator import generateBuilding, generateHospital
+import pickle
 
 inputs = (
 	("House Generator", "label"),
@@ -17,36 +18,43 @@ inputs = (
 	("Ceiling Material Subtype (max)", 5)
 	)
 
-def perform(level, box, options):
+def perform(level, box, options, height_map=None):
 
 	# PREPARATION
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
-	height_map = utilityFunctions.getHeightMap(level,box)
 	world_space = utilityFunctions.dotdict({"y_min": 0, "y_max": height-1, "x_min": 0, "x_max": width-1, "z_min": 0, "z_max": depth-1})
 
+	# calculate height map if not passed as param
+	if height_map == None:
+		height_map = utilityFunctions.getHeightMap(level,box)
+	
 	# PARTITIONING OF NEIGHBOURHOODS
 	(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
 	
 	# GENERATING CITY CENTER
 	space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
-	partitioning_list = generatePartitionings(space)
+	print("City Center Space: ")
+	print(space)
+	partitioning_list = generatePartitionings(space, 35, 20)
 	partitioning_list = removeInvalidPartitionsFromPartitionings(partitioning_list, height_map)
 	partitioning = selectBestPartition(partitioning_list)
-	print("Center Partitioning:")
+	print("City Center: ")
 	for p in partitioning:
-		print(p)
+		print (p)
 	fillBuildings(level, box, matrix, height, width, depth, partitioning, height_map, options)
 
 	# GENERATING NEIGHBOURHOODS
 	for partitioning in neighbourhoods:
-		print("neighbourhood in Partitioning:")
-		for p in partitioning:
-			print(p)
 		space = utilityFunctions.dotdict({"y_min": partitioning[0], "y_max": partitioning[1], "x_min": partitioning[2], "x_max": partitioning[3], "z_min": partitioning[4], "z_max": partitioning[5]})
+		print("Neighbourhood Space: ")
+		print(space)
 		partitioning_list = generatePartitionings(space)
 		partitioning_list = removeInvalidPartitionsFromPartitionings(partitioning_list, height_map)
 		partitioning = selectBestPartition(partitioning_list)
+		print("neighbourhoods: ")
+		for p in partitioning:
+			print (p)
 		fillHouses(level, box, matrix, height, width, depth, partitioning, height_map, options)
 
 	# UPDATE WORLD
@@ -129,17 +137,18 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 # ==========================================================================
 
 
-def generatePartitionings(space, number_of_tries=50):
+def generatePartitionings(space, partition_min=30, valid_min=15, number_of_tries=10):
 
 	partitioning_list = []
 	for i in range(number_of_tries):
-		partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+		#partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, partition_min=partition_min, valid_min=valid_min)
+		partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [], partition_min=partition_min, valid_min=valid_min)
 		partitioning_list.append(partitioning)
 	return partitioning_list
 
 def generateNeighbourhoodPartitioning(space, height_map):
 	neighbourhoods = []
-	center = utilityFunctions.getSubsection(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, 0.4)
+	center = utilityFunctions.getSubsection(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, 0.6)
 	partitions = utilityFunctions.subtractPartition((space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max), center)
 	for p in partitions:
 		neighbourhoods.append(p)
@@ -272,7 +281,7 @@ def fillHouses(level, box, matrix, height, width, depth, partitioning, height_ma
 # z_min, z_max. Returns a list with only valid partitions
 #def generateAndValidatePartition(y_min, y_max, x_min, x_max, z_min, z_max, height_map):
 #	partition = []
-#	initial_partitioning = binarySpacePartitioning(y_min, y_max, x_min, x_max, z_min, z_max, [])
+#	initial_partitioning = binarySpacePartitioning(y_min, y_max, x_min, x_max, z_min, z_max)
 #
 #	for p in initial_partitioning:
 #		if isValidPartition(p[0], p[1], p[2], p[3], p[4], p[5], height_map) == True:

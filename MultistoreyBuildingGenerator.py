@@ -38,13 +38,17 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 
-	x_min += 3
-	x_max -= 3
-	z_min += 3
-	z_max -= 3
+	# x_min += 3
+	# x_max -= 3
+	# z_min += 3
+	# z_max -= 3
 
-	if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
-		return matrix
+	# if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
+	# 	return matrix
+
+	(h_min, h_max, x_min, x_max, z_min, z_max) = getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
+
+	#print("Building building at ", (h_min, h_max, x_min, x_max, z_min, z_max))
 
 	#wall = (43,random.randint(0,8))
 	wall = (159,random.randint(0,15))
@@ -63,6 +67,21 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
 	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
 	generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+
+def getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
+	building_size_x = random.randint(15, 18)
+	if x_max-x_min > building_size_x:
+		x_mid = x_min + (x_max-x_min)/2
+		x_min = x_mid - building_size_x/2
+		x_max = x_mid + building_size_x/2
+
+	building_size_z = random.randint(15, 18)
+	if z_max-z_min > building_size_z:
+		z_mid = z_min + (z_max-z_min)/2
+		z_min = z_mid - building_size_z/2
+		z_max = z_mid + building_size_z/2
+
+	return (h_min, h_max, x_min, x_max, z_min, z_max)
 
 def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
 	#print("Generating interior!")
