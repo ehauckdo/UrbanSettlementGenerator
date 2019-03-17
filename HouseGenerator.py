@@ -9,6 +9,8 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	generateFence(matrix, h_min+1, x_min, x_max, z_min, z_max)
 
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
+
+	print("Building house at ", (h_min, h_max, x_min, x_max, z_min, z_max))
 	
 	#wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
 	#ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
@@ -29,13 +31,15 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	if random.random() > 0.5:
 		generateDoor_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
 		generateWindow_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
-		generateCeiling_x(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
+		roof_top = h_max - generateCeiling_x(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
 	else:
 		generateDoor_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
 		generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
-		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
+		roof_top = h_max - generateCeiling_z(matrix, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, ceiling, wall, 0)
 
-	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3])
+
+	print("Roof top:", roof_top)
+	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], ceiling)
 
 def getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 	house_size_x = random.randint(10, 14)
@@ -89,7 +93,7 @@ def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_m
 			matrix[y][x_max][z] = wall
 			matrix[y][x_min][z] = wall
 
-def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
+def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max, wood):
 	
 	# bed
 	matrix[h_min+1][x_max-1][z_min+1] = (26,11)
@@ -116,6 +120,13 @@ def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
 	matrix[h_min+1][x_min+2][z_max-1] = (53, 2)
 	matrix[h_min+1][x_min+1][z_max-1] = (68, 4)
 
+	# chandelier
+	x_mid = x_min + (x_max-x_min)/2
+	z_mid = z_min + (z_max-z_min)/2
+	for z in range(z_min+1, z_max):
+		matrix[h_max][x_mid][z] = wood
+	matrix[h_max-1][x_mid][z_mid] = (85,0)
+	matrix[h_max-2][x_mid][z_mid] = (169,0)
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
@@ -128,13 +139,13 @@ def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 			matrix[h_min+recr][x_max-recr][z] = ceiling   #     _| |_
 			matrix[h_min+recr][x_min+recr+1][z] = ceiling #   _|     |_
 			matrix[h_min+recr][x_max-recr-1][z] = ceiling # _|         |_
-		for x in range(x_min+recr+2, x_max-recr-1):
+		for x in range(x_min+recr+2, x_max-recr-1):		
 			#print("testing x ", x)
-			matrix[h_min+recr][x][z_min+1] = wall
+			matrix[h_min+recr][x][z_min+1] = wall 		  # fill front and back part of the roof
 			matrix[h_min+recr][x][z_max-1] = wall
 
 	if recr < h_max-h_min:
-		generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
+		recr = generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
 	else:
 	 	old_recr = h_min+recr
 	 	while x_min+recr+1 < x_max-recr-1:
@@ -142,6 +153,8 @@ def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 	 		for z in range (z_min, z_max+1):
 	 			matrix[old_recr][x_min+recr+1][z] = ceiling
 	 			matrix[old_recr][x_max-recr-1][z] = ceiling
+
+	return recr
 
 def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
@@ -160,7 +173,7 @@ def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 			matrix[h_min+recr][x_max-1][z] = wall
 
 	if recr < h_max-h_min:
-		generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
+		recr = generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr+1)
 	else:
 		old_recr = h_min+recr
 		while  z_min+recr+1 < z_max-recr-1:
@@ -168,6 +181,8 @@ def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 			for x in range (x_min, x_max+1):
 				matrix[old_recr][x][z_min+recr+1] = ceiling
 				matrix[old_recr][x][z_max-recr-1] = ceiling
+
+	return recr
 
 def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 

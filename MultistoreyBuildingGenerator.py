@@ -212,7 +212,7 @@ def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_
 		floor += 1
 		cur_floor += floor_size
 
-def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
+def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	
 	# bed
 	matrix[h_min+1][x_max-1][z_min+1] = (26,11)
@@ -239,6 +239,12 @@ def generateInterior(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max):
 	matrix[h_min+1][x_min+2][z_max-1] = (53, 2)
 	matrix[h_min+1][x_min+1][z_max-1] = (68, 4)
 
+	# chandelier
+	x_mid = x_min + (x_max-x_min)/2
+	z_mid = z_min + (z_max-z_min)/2
+	matrix[h_max-1][x_mid][z_mid] = (85,0)
+	matrix[h_max-2][x_mid][z_mid] = (85,0)
+	matrix[h_max-3][x_mid][z_mid] = (169,0)
 
 
 def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
