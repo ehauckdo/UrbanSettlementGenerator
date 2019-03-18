@@ -359,6 +359,55 @@ def getHeightMap(level, box):
 
 	return terrain
 
+def getPathMap(height_map, width, depth):
+	pathMap = []
+
+	print(width, depth)
+	for x in range(width):
+		pathMap.append([])
+		for z in range(depth):
+			pathMap[x].append(dotdict())
+
+	threshold = 10
+	for x in range(width):
+		for z in range(depth):
+			#left
+			if x-1 < 0:
+				pathMap[x][z].left = -1
+			else:
+				pathMap[x][z].left = abs(height_map[x-1][z] - height_map[x][z])
+				if pathMap[x][z].left > threshold:
+					pathMap[x][z].left = -1
+
+
+			#right
+			if x+1 >= width:
+				pathMap[x][z].right = -1
+			else:
+				pathMap[x][z].right = abs(height_map[x][z] - height_map[x+1][z])
+				if pathMap[x][z].right > threshold:
+					pathMap[x][z].right = -1
+
+			#down 
+			if z-1 < 0:
+				pathMap[x][z].down = -1
+			else:
+				pathMap[x][z].down = abs(height_map[x][z] - height_map[x][z-1])
+				if pathMap[x][z].down > threshold:
+					pathMap[x][z].down = -1			
+
+			#up 
+			if z+1 >= depth:
+				pathMap[x][z].up = -1
+			else:
+				pathMap[x][z].up = abs(height_map[x][z+1] - height_map[x][z])
+				if pathMap[x][z].up > threshold:
+					pathMap[x][z].up = -1
+			
+
+	return pathMap
+
+
 def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
 	# sample testing
 	#print("Testing if valid area starting in ", random_x, random_z)
@@ -481,6 +530,66 @@ def updateWorld(level, box, matrix, height, width, depth):
 					except:
 						setBlock(level, (matrix[h][w][d], 0), x, y, z)
 
+def getCentralPoint(x_min, x_max, z_min, z_max):
+	x_mid = x_max - int((x_max - x_min)/2)
+	z_mid = z_max - int((z_max - z_min)/2)
+	return (x_mid, z_mid)
+
+def pavementConnection(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
+	print("Connecting ", (x_p1, z_p1), (x_p2, z_p2))
+	for x in twoway_range(x_p1, x_p2):
+		h = height_map[x][z_p1]
+		matrix[h][x][z_p1] = pavementBlock
+		matrix[h+1][x][z_p1] = (0,0)
+
+	for z in twoway_range(z_p1, z_p2):
+		h = height_map[x_p2][z]
+		matrix[h][x_p2][z] = pavementBlock
+		matrix[h+1][x_p2][z] = (0,0)
+
+def getMST(partitions):
+	MST = []
+	while len(partitions) > 0:
+	
+		#print("PARTITIONS: ")
+		#print(partitions)
+		vertices = []
+		for e in MST:
+			if e[0] not in vertices:
+				vertices.append(e[0])
+			if e[1] not in vertices:
+				vertices.append(e[1])
+
+		if len(vertices) == 0:
+			selected_vertex = partitions[random.randint(0, len(partitions)-1)]
+			#print("Selected: " , selected_vertex)
+			vertices.append(selected_vertex)
+			partitions.remove(selected_vertex)
+
+		edges = []
+		for v in vertices:
+			for p in partitions:
+				#p1 = getCentralPoint(v[2],v[3],v[4],v[5])
+				#p2 = getCentralPoint(p[2],p[3],p[4],p[5])
+				p1 = v.entranceLot
+				p2 = p.entranceLot
+				distance = getEuclidianDistance(p1, p2)
+				edges.append((distance, v, p))
+
+		edges = sorted(edges)
+		#print("Edges: ")
+		#for e in edges:
+		#	print(e)
+
+		MST.append((edges[0][1], edges[0][2]))
+		partitions.remove(edges[0][2])
+		#print("MST: ")
+		#for m in MST:
+		#	print(m)
+
+	return MST
+
+
 #print a matrix given its h,w,d dimensions
 def printMatrix(matrix, height, width, depth):
 	for h in range(0,height):
@@ -526,3 +635,9 @@ def convertDepthMatrixToBox(box, max_z, depth):
 	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
 		if d == depth:
 			return z
+
+def updateHeightMap(height_map, x_min, x_max, z_min, z_max, height):
+	for x in range(x_min, x_max+1):
+		for z in range(z_min, z_max+1):
+			height_map[x][z] = height
+

@@ -36,6 +36,11 @@ def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
+	building = utilityFunctions.dotdict()
+	building.type = "building"
+	#house.area = (h_min, h_max, x_min, x_max, z_min, z_max)
+	building.area = utilityFunctions.dotdict({"y_min": h_min, "y_max": h_max, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
+
 	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 
 	# x_min += 3
@@ -47,6 +52,7 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	# 	return matrix
 
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
+	building.constructionArea = (h_min, h_max, x_min, x_max, z_min, z_max)
 
 	#print("Building building at ", (h_min, h_max, x_min, x_max, z_min, z_max))
 
@@ -65,8 +71,18 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
-	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
+	building.door = generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
+	if building.door[2] == z_min:
+		building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
+	elif building.door[2] == z_max:
+		building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
+	if building.door[1] == x_min:
+		building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
+	elif building.door[1] == x_max:
+		building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
 	generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+
+	return building
 
 def getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 	building_size_x = random.randint(15, 18)
@@ -215,8 +231,12 @@ def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_
 def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	
 	# bed
-	matrix[h_min+1][x_max-1][z_min+1] = (26,11)
-	matrix[h_min+1][x_max-2][z_min+1] = (26,3)
+	#matrix[h_min+1][x_max-1][z_min+1] = (26,11)
+	#matrix[h_min+1][x_max-2][z_min+1] = (26,3)
+
+	# bed (wool)
+	matrix[h_min+1][x_max-1][z_min+1] = (35,14)
+	matrix[h_min+1][x_max-2][z_min+1] = (35,14)
 
 	x_mid = x_max - int((x_max - x_min)/2)
 	z_mid = z_max - int((z_max - z_min)/2)
@@ -316,18 +336,22 @@ def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door
 		pos = random.randint(z_min+1,z_max-1)
 		matrix[h_min+2][x_min][pos] = (64,9)
 		matrix[h_min+1][x_min][pos] = (64,0)
+		return (h_min+1, x_min, pos)
 	elif chance < 0.50:
 		pos = random.randint(x_min+1,x_max-1)
 		matrix[h_min+2][pos][z_min] = (64,8)
 		matrix[h_min+1][pos][z_min] = (64,1)
+		return (h_min+1, pos, z_min)
 	elif chance < 0.75:
 		pos = random.randint(z_min+1,z_max-1)
 		matrix[h_min+2][x_max][pos] = (64,9)
 		matrix[h_min+1][x_max][pos] = (64,2)
+		return (h_min+1, x_max, pos)
 	else:
 		pos = random.randint(x_min+1,x_max-1)
 		matrix[h_min+2][pos][z_max] = (64,8)
 		matrix[h_min+1][pos][z_max] = (64,3)
+		return (h_min+1, pos, z_max)
 
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	for h in range(h_min, h_max):

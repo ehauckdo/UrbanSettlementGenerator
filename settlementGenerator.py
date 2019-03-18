@@ -31,8 +31,10 @@ def perform(level, box, options, height_map=None):
 	
 	# PARTITIONING OF NEIGHBOURHOODS
 	(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
-	
+
 	# GENERATING CITY CENTER
+	all_lots = []
+	all_buildings = []
 	space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
 	print("City Center Space: ")
 	print(space)
@@ -42,7 +44,9 @@ def perform(level, box, options, height_map=None):
 	print("City Center: ")
 	for p in partitioning:
 		print (p)
-	fillBuildings(level, box, matrix, height, width, depth, partitioning, height_map, options)
+	buildings = fillBuildings(level, box, matrix, height, width, depth, partitioning, height_map, options)
+	all_buildings.extend(buildings)
+	all_lots.extend(partitioning)
 
 	# GENERATING NEIGHBOURHOODS
 	for partitioning in neighbourhoods:
@@ -55,7 +59,37 @@ def perform(level, box, options, height_map=None):
 		print("neighbourhoods: ")
 		for p in partitioning:
 			print (p)
-		fillHouses(level, box, matrix, height, width, depth, partitioning, height_map, options)
+		houses = fillHouses(level, box, matrix, height, width, depth, partitioning, height_map, options)
+		all_buildings.extend(houses)
+		all_lots.extend(partitioning)
+
+	# GENERATE A PATH MAP TO FIND ROADS BETWEEN BUILDINGS
+	pathMap = utilityFunctions.getPathMap(height_map, width, depth)
+	print("Path Map:")
+	for z in range(depth):
+		for x in range(width):
+			print(x, z, pathMap[x][z])
+		
+	pavementBlockID = 171
+	pavementBlockSubtype = random.randint(0, 14)
+	#MST = utilityFunctions.getMST(all_lots)
+	MST = utilityFunctions.getMST(all_buildings)
+	print("Final MST: ")
+	for m in MST:
+		print(m)
+	for m in MST:
+		print("Pavement between ", m[0], m[1])
+		p1 = m[0]
+		p2 = m[1]
+		#p1_center = utilityFunctions.getCentralPoint(p1[2],p1[3],p1[4],p1[5])
+		#p2_center = utilityFunctions.getCentralPoint(p2[2],p2[3],p2[4],p2[5])
+		p1_entrancePoint = p1.entranceLot
+		p2_entrancePoint = p2.entranceLot
+		#utilityFunctions.pavementConnection(matrix, p1_center[0], p1_center[1], p2_center[0], p2_center[1], height_map, (pavementBlockID, pavementBlockSubtype))
+		utilityFunctions.pavementConnection(matrix, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
+
+
+	
 
 	# UPDATE WORLD
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
@@ -72,11 +106,13 @@ def prepareLot(level, box, matrix, height, width, depth, p, height_map):
 	if areaScore != 0:
 		flattened_height = flattenPartition(matrix, level, box, height, width, depth, p[2],p[3], p[4], p[5], height_map)
 		#print("Flattened height: ", flattened_height)
+		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], flattened_height)
 		h = utilityFunctions.convertHeightCoordinates(box, height, flattened_height)
 	else:
 		heightCounts = utilityFunctions.getHeightCounts(height_map, p[2],p[3], p[4], p[5])
 		most_ocurred_height = max(heightCounts, key=heightCounts.get)
 		#print("Non flattened height: ", most_ocurred_height)
+		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], most_ocurred_height)
 		h = utilityFunctions.convertHeightCoordinates(box, height, most_ocurred_height)
 
 	return h
@@ -205,18 +241,26 @@ def settlementGenerator(level, box, matrix, height, width, depth, partitioning, 
 			generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
 
 def fillBuildings(level, box, matrix, height, width, depth, partitioning, height_map, options):
+	buildings = []
 	for p in partitioning:
 		#print(p[0],p[1],p[2],p[3], p[4], p[5])	
 		#if random.random() > 0.5:
 		h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
-		generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
+		buildings.append(generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options))
+		utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-1, p[4]+1, p[5]-1, -1)
+	return buildings
 
 def fillHouses(level, box, matrix, height, width, depth, partitioning, height_map, options):
+	ceilingBlockID = 171
+	ceilingBlockSubtype = random.randint(0, 14)
+	houses = []
 	for p in partitioning:
 		#print(p[0],p[1],p[2],p[3], p[4], p[5])
-		#if random.random() > 0.5:
+		#if random.random() > 0.5:	
 		h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
-		generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
+		houses.append(generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options, (ceilingBlockID, ceilingBlockSubtype)))
+		utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-1, p[4]+1, p[5]-1, -1)
+	return houses
 
 #
 # Old settlement generator function
