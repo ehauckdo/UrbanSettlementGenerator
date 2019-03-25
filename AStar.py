@@ -15,12 +15,20 @@ class Node():
 def aStar(p1, p2, pathMap, height_map):
 
 	print("==== P1:  ", p1, ", ==== P2: ", p2)
+	# header = "hea "
+	# for z in range(40, 90):
+	# 	header += str(z)+" "
+	# print(header)
+	# for x in range(174, 182):
+	# 	line = str(x)+" "
+	# 	for z in range(40, 90):
+	# 		line += str(height_map[x][z])+" "
+	# 	print(line)
+
 	start_node = Node(None, (p1[1], p1[2]))
 	start_node.g = start_node.h = start_node.f = 0
 	end_node = Node(None, (p2[1], p2[2]))
 	end_node.g = end_node.h = end_node.f = 0
-
-
 
 	# Initialize both open and closed list
 	open_list = []
@@ -40,7 +48,7 @@ def aStar(p1, p2, pathMap, height_map):
 			if item.f < current_node.f:
 			    current_node = item
 			    current_index = index
-		#print("-- Current node: ", current_node.position)
+		print("-- Current node: ", current_node.position)
 
 		# Pop current off open list, add to closed list
 		open_list.pop(current_index)
@@ -61,7 +69,7 @@ def aStar(p1, p2, pathMap, height_map):
 
 			# Get node position
 			node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-			#print("Testing new position ", node_position)
+			print("Testing new position ", node_position)
 
 			# Make sure within range
 			if node_position[0] > (len(pathMap) - 1) or node_position[0] < 0 or node_position[1] > (len(pathMap[len(pathMap)-1]) -1) or node_position[1] < 0:
@@ -78,7 +86,7 @@ def aStar(p1, p2, pathMap, height_map):
 			#print("height_map parent: ", height_map[current_node.position[0]][current_node.position[1]])
 			#print("height_map parent: ", height_map[new_node.position[0]][new_node.position[1]])
 
-			if pathMap[current_node.position[0]][current_node.position[1]][direction] == -1:
+			if pathMap[current_node.position[0]][current_node.position[1]][direction] == -1 and node_position != end_node.position:
 				#print("Failed pathMap test!")
 				continue
 
@@ -108,8 +116,9 @@ def aStar(p1, p2, pathMap, height_map):
 			if skip == True: continue
 
 			# Create the f, g, and h values
-			child.g = current_node.g + 1
-			child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+			child.g = current_node.g + (1 + g**2)
+			#child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
+			child.h = getManhattanDistance(child.position, end_node.position)
 			child.f = child.g + child.h
 
 			# Child is already in the open list
@@ -124,6 +133,10 @@ def aStar(p1, p2, pathMap, height_map):
 			# Add the child to the open list
 			open_list.append(child)
    
+
+def getManhattanDistance(p1,p2):
+	distance = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+	return distance
 
 def getDirectionFromParent(parent, child):
 	x = parent.position[0] - child.position[0]

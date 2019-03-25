@@ -5,6 +5,10 @@ from numpy import *
 from pymclevel import alphaMaterials, MCSchematic, MCLevel, BoundingBox
 from mcplatform import *
 from collections import defaultdict
+from AStar import aStar
+import RNG
+import copy
+import sys
 
 # These are a few helpful functions we hope you find useful to use
 
@@ -213,9 +217,13 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 # class that allows easy indexing of dicts
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
-    __getattr__ = dict.get
+    #__getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+    def __getattr__(self, attr):
+        if attr.startswith('__'):
+            raise AttributeError
+        return self.get(attr, None)
 
 # generate and return 3d matrix as in the format matrix[h][w][d] 
 def generateMatrix(width, depth, height, options):
@@ -285,6 +293,10 @@ def getEuclidianDistance(p1,p2):
 	distance = math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2))
 	return distance
 
+def getManhattanDistance(p1,p2):
+	distance = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+	return distance
+
 
 # Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
 def drillDown(level,box):
@@ -306,8 +318,8 @@ def getAreasSameHeight(box,terrain):
 	validAreas = []
 
 	for i in range(0, 1000):
-		random_x = random.randint(0, box.maxx-box.minx)
-		random_z = random.randint(0,box.maxz-box.minz)
+		random_x = RNG.randint(0, box.maxx-box.minx)
+		random_z = RNG.randint(0,box.maxz-box.minz)
 		size_x = 15
 		size_z = 15
 		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, size_x, size_z):
@@ -331,9 +343,9 @@ def hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map):
 				return False
 	return True
 
-def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max):
+def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h=4, minimum_w=16, minimum_d=16):
 
-	if y_max-y_min < 4 or x_max-x_min < 15 or z_max-z_min < 15:
+	if y_max-y_min < minimum_h or x_max-x_min < minimum_w or z_max-z_min < minimum_d:
 		return False
 	return True
 
@@ -368,15 +380,23 @@ def getPathMap(height_map, width, depth):
 		for z in range(depth):
 			pathMap[x].append(dotdict())
 
-	threshold = 10
+	threshold = 50
 	for x in range(width):
 		for z in range(depth):
+
+			#if height_map[x][z] == -1:
+			#	pathMap[x][z].left = -1
+			#	pathMap[x][z].right = -1
+			#	pathMap[x][z].down = -1
+			#	pathMap[x][z].up = -1
+			#	continue
+
 			#left
 			if x-1 < 0:
 				pathMap[x][z].left = -1
 			else:
 				pathMap[x][z].left = abs(height_map[x-1][z] - height_map[x][z])
-				if pathMap[x][z].left > threshold:
+				if pathMap[x][z].left > threshold or height_map[x-1][z] == -1:
 					pathMap[x][z].left = -1
 
 
@@ -385,7 +405,7 @@ def getPathMap(height_map, width, depth):
 				pathMap[x][z].right = -1
 			else:
 				pathMap[x][z].right = abs(height_map[x][z] - height_map[x+1][z])
-				if pathMap[x][z].right > threshold:
+				if pathMap[x][z].right > threshold or height_map[x+1][z] == -1:
 					pathMap[x][z].right = -1
 
 			#down 
@@ -393,7 +413,7 @@ def getPathMap(height_map, width, depth):
 				pathMap[x][z].down = -1
 			else:
 				pathMap[x][z].down = abs(height_map[x][z] - height_map[x][z-1])
-				if pathMap[x][z].down > threshold:
+				if pathMap[x][z].down > threshold or height_map[x][z-1] == -1:
 					pathMap[x][z].down = -1			
 
 			#up 
@@ -401,9 +421,14 @@ def getPathMap(height_map, width, depth):
 				pathMap[x][z].up = -1
 			else:
 				pathMap[x][z].up = abs(height_map[x][z+1] - height_map[x][z])
-				if pathMap[x][z].up > threshold:
+				if pathMap[x][z].up > threshold or height_map[x][z+1] == -1:
 					pathMap[x][z].up = -1
 			
+
+	print("PathMap: ")
+	for x in range(width):
+		for z in range(depth):
+			print(x, z, pathMap[x][z])
 
 	return pathMap
 
@@ -491,6 +516,23 @@ def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
 				flood_values[value] += 1
 	return flood_values
 
+def getMostOcurredGroundBlock(level, height_map, min_x, max_x, min_z, max_z):
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
+	block_values = {}
+	for x in range(min_x, max_x+1):
+		for z in range(min_z, max_z+1):
+			groundBlock = level.blockAt(x, height_map[x][z], z)
+			if groundBlock not in block_values.keys():
+				block_values[groundBlock] = 1
+			else:
+				block_values[groundBlock] += 1
+
+	for key in sorted(block_values, key=block_values.get):
+		if key not in air_like:
+			return (key, 0)
+
+	grass_block = (2,0)
+	return grass_block
 
 
 # receives a list of areas in the format (x_min, x_max, z_min, z_max)
@@ -535,36 +577,53 @@ def getCentralPoint(x_min, x_max, z_min, z_max):
 	z_mid = z_max - int((z_max - z_min)/2)
 	return (x_mid, z_mid)
 
-def pavementConnection(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
+def pavementConnection_old(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
 	print("Connecting ", (x_p1, z_p1), (x_p2, z_p2))
 	for x in twoway_range(x_p1, x_p2):
-		h = height_map[x][z_p1]
+		#h = height_map[x][z_p1]
+		h = 100
 		matrix[h][x][z_p1] = pavementBlock
-		matrix[h+1][x][z_p1] = (0,0)
+		for i in range(5):
+			matrix[h+i][x][z_p1] = (0,0)
+		
 
 	for z in twoway_range(z_p1, z_p2):
-		h = height_map[x_p2][z]
+		#h = height_map[x_p2][z]
+		h = 100
 		matrix[h][x_p2][z] = pavementBlock
 		matrix[h+1][x_p2][z] = (0,0)
 
-def getMST(partitions):
+def pavementConnection(matrix, path, build1, build2, height_map, pavementBlock = (4,0)):
+	print("Connecting ", build1.entranceLot, build2.entranceLot)
+	for p in path:
+		x = p[0]
+		z = p[1]
+		#h = height_map[x][z]
+		h = 100
+		matrix[h][x][z] = pavementBlock
+
+def getMST(buildings, pathMap, height_map):
 	MST = []
+	vertices = []
+	partitions = copy.deepcopy(buildings)
+
+	distance_dict = {}
+	print("All partitions")
+	for p in partitions:
+		distance_dict[p.entranceLot] = {}
+		print p.entranceLot
+
+	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
+	print("Selected: " , selected_vertex)
+	vertices.append(selected_vertex)
+	partitions.remove(selected_vertex)
+
+	sys.stdout.flush()
+
 	while len(partitions) > 0:
 	
 		#print("PARTITIONS: ")
 		#print(partitions)
-		vertices = []
-		for e in MST:
-			if e[0] not in vertices:
-				vertices.append(e[0])
-			if e[1] not in vertices:
-				vertices.append(e[1])
-
-		if len(vertices) == 0:
-			selected_vertex = partitions[random.randint(0, len(partitions)-1)]
-			#print("Selected: " , selected_vertex)
-			vertices.append(selected_vertex)
-			partitions.remove(selected_vertex)
 
 		edges = []
 		for v in vertices:
@@ -573,22 +632,67 @@ def getMST(partitions):
 				#p2 = getCentralPoint(p[2],p[3],p[4],p[5])
 				p1 = v.entranceLot
 				p2 = p.entranceLot
-				distance = getEuclidianDistance(p1, p2)
-				edges.append((distance, v, p))
+
+				if p2 in distance_dict[p1].keys():
+					distance = distance_dict[p1][p2]
+				elif p1 in distance_dict[p2].keys():
+					distance = distance_dict[p2][p1]
+				else: 
+
+					#distance = getManhattanDistance((p1[1],p1[2]), (p2[1],p2[2]))
+					distance = aStar(p1, p2, pathMap, height_map)
+					distance_dict[p1][p2] = distance
+					distance_dict[p2][p1] = distance
+				if distance != None:
+					edges.append((len(distance), distance, v, p))
+				#if distance != None:
+				#	edges.append((distance, distance, v, p))
+				else:
+					edges.append((-1, None, v, p))
+					print("NO PATHS BETWEEN ", p1, p2)
 
 		edges = sorted(edges)
-		#print("Edges: ")
-		#for e in edges:
-		#	print(e)
+		print("Edges: ")
+		for e in edges:
+			print(e[0], e[2].entranceLot, e[3].entranceLot)
 
-		MST.append((edges[0][1], edges[0][2]))
-		partitions.remove(edges[0][2])
+		if len(edges) > 0:
+			MST.append((edges[0][0], edges[0][1], edges[0][2], edges[0][3]))
+		partitions.remove(edges[0][3])
+		vertices.append(edges[0][3])
+		print("partitions left: ", len(partitions))
 		#print("MST: ")
 		#for m in MST:
 		#	print(m)
 
 	return MST
 
+def getMST_Manhattan(buildings, pathMap, height_map):
+	MST = []
+	vertices = []
+	partitions = copy.deepcopy(buildings)
+
+	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
+	vertices.append(selected_vertex)
+	partitions.remove(selected_vertex)
+
+	while len(partitions) > 0:
+	
+		edges = []
+		for v in vertices:
+			for p in partitions:				
+				p1 = v.entranceLot
+				p2 = p.entranceLot
+				distance = getManhattanDistance((p1[1],p1[2]), (p2[1],p2[2]))	
+				edges.append((distance, v, p))
+
+		edges = sorted(edges)
+		if len(edges) > 0:
+			MST.append((edges[0][0], edges[0][1], edges[0][2]))
+		partitions.remove(edges[0][2])
+		vertices.append(edges[0][2])
+	return MST
+	
 
 #print a matrix given its h,w,d dimensions
 def printMatrix(matrix, height, width, depth):

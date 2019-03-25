@@ -1,9 +1,11 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
+from GenerateCarpet import generateCarpet
 import random
 import math
+import RNG
 
-def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, ceiling = (5, random.randint(1,5))):
+def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, ceiling = (5, RNG.randint(1,5))):
 
 	house = utilityFunctions.dotdict()
 	house.type = "house"
@@ -18,10 +20,10 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, cei
 
 	print("Building house at ", (h_min, h_max, x_min, x_max, z_min, z_max))
 	
-	#wall = (options["Walls Material Type"].ID, random.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
-	#ceiling = (options["Ceiling Material Type"].ID, random.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
-	wall = (43, random.randint(11,15))
-	#ceiling = (5, random.randint(1,5))
+	#wall = (options["Walls Material Type"].ID, RNG.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
+	#ceiling = (options["Ceiling Material Type"].ID, RNG.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
+	wall = (43, RNG.randint(11,15))
+	#ceiling = (5, RNG.randint(1,5))
 	floor = wall
 	door = (0,0)
 
@@ -36,7 +38,7 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, cei
 	generateWalls(matrix, h_min, ceiling_bottom, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
 	generateFloor(matrix, h_min, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], floor)
 
-	if random.random() > 0.5:
+	if RNG.random() > 0.5:
 		house.orientation = "x"
 		house.door = generateDoor_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
 		if house.door[2] == walls_pos[2]:
@@ -55,18 +57,22 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, cei
 		generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
 		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
 
+
 	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], ceiling)
+
+	for h in range(h_min, 100):
+		matrix[h][house.entranceLot[1]][house.entranceLot[2]] = (35,2)
 
 	return house
 
 def getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
-	house_size_x = random.randint(10, 14)
+	house_size_x = RNG.randint(10, 14)
 	if x_max-x_min > house_size_x:
 		x_mid = x_min + (x_max-x_min)/2
 		x_min = x_mid - house_size_x/2
 		x_max = x_mid + house_size_x/2
 
-	house_size_z = random.randint(10, 14)
+	house_size_z = RNG.randint(10, 14)
 	if z_max-z_min > house_size_z:
 		z_mid = z_min + (z_max-z_min)/2
 		z_min = z_mid - house_size_z/2
@@ -152,13 +158,13 @@ def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max, wood):
 	matrix[h_max-1][x_mid][z_mid] = (85,0)
 	matrix[h_max-2][x_mid][z_mid] = (169,0)
 
-def generateCarpet(matrix, h, x_min, x_max, z_min, z_max):
-	carpetID = 171
-	carpetSubtype = random.randint(0, 14)
+# def generateCarpet(matrix, h, x_min, x_max, z_min, z_max):
+# 	carpetID = 171
+# 	carpetSubtype = RNG.randint(0, 14)
 
-	for x in range(x_min, x_max):
-		for z in range(z_min, z_max):
-			matrix[h][x][z] = (carpetID, carpetSubtype)
+# 	for x in range(x_min, x_max):
+# 		for z in range(z_min, z_max):
+# 			matrix[h][x][z] = (carpetID, carpetSubtype)
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
@@ -214,8 +220,8 @@ def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 
 def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
-	pos = random.randint(x_min+1,x_max-1)
-	chance = random.random()
+	pos = RNG.randint(x_min+1,x_max-1)
+	chance = RNG.random()
 	if chance < 0.50:
 		matrix[h_min+1][pos][z_min] = (64,8)
 		matrix[h_min][pos][z_min] = (64,1)
@@ -227,8 +233,8 @@ def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, do
 
 def generateDoor_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
-	pos = random.randint(z_min+1,z_max-1)
-	chance = random.random()
+	pos = RNG.randint(z_min+1,z_max-1)
+	chance = RNG.random()
 	if chance < 0.50:
 		matrix[h_min+1][x_min][pos] = (64,9)
 		matrix[h_min][x_min][pos] = (64,0)
@@ -245,16 +251,16 @@ def generateWindow_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 	whmax = h_max - int((h_max - h_min)/2.5)
 
 	width = z_max - z_min
-	pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-	pos_max = random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
 
 	for p in range(pos_min, pos_max):
 		for w in range(whmin, whmax):
 			matrix[w][x_min][p] = (20,0)
 
 	width = z_max - z_min
-	pos_min = random.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-	pos_max = random.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
 
 	for p in range(pos_min, pos_max):
 		for w in range(whmin, whmax):
@@ -267,16 +273,16 @@ def generateWindow_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 	whmax = h_max - int((h_max - h_min)/2.5)
 
 	width = x_max - x_min
-	pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-	pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
 
 	for p in range(pos_min, pos_max):
 		for w in range(whmin, whmax):
 			matrix[w][p][z_min] = (20,0)
 
 	width = x_max - x_min
-	pos_min = random.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-	pos_max= random.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
 
 	for p in range(pos_min, pos_max):
 		for w in range(whmin, whmax):

@@ -2,6 +2,7 @@ from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
 import random
 import math
+import RNG
 
 def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
@@ -38,7 +39,7 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
 	building = utilityFunctions.dotdict()
 	building.type = "building"
-	#house.area = (h_min, h_max, x_min, x_max, z_min, z_max)
+
 	building.area = utilityFunctions.dotdict({"y_min": h_min, "y_max": h_max, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
 
 	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
@@ -70,17 +71,40 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 		h_max -= 1
 
 	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
-	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
-	building.door = generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
-	if building.door[2] == z_min:
-		building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
-	elif building.door[2] == z_max:
-		building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
-	if building.door[1] == x_min:
-		building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
-	elif building.door[1] == x_max:
-		building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
-	generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	if RNG.random() > 0.5:
+
+		building.orientation = "x"
+		building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
+		if building.door[2] == z_min:
+			building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
+		else:
+			building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
+		generateBuildingWindows_x(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	else:
+		building.orientation = "z"
+		building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
+		if building.door[1] == x_min:
+			building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
+		else:
+			building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
+		generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+
+	#generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	#building.door = generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
+	#if building.door[2] == z_min:
+	#	building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
+	#elif building.door[2] == z_max:
+	#	building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
+	#if building.door[1] == x_min:
+	#	building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
+	#elif building.door[1] == x_max:
+	#	building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
+	generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
+
+	#for h in range(h_min, 100):
+	#	matrix[h][building.entranceLot[1]][building.entranceLot[2]] = (35,2)
 
 	return building
 
@@ -99,85 +123,7 @@ def getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 
 	return (h_min, h_max, x_min, x_max, z_min, z_max)
 
-def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
-	#print("Generating interior!")
-	cur_floor = h_min
-	floor = 0
-	while cur_floor <= h_max:
-		step = cur_floor+floor_size-1
-		if floor % 4 == 0:
-			#print("At 3")
-			x = x_max-1
-			z = z_max-1
-			# hole to go up to upper floor
-			for x1 in range(x, x-3, -1):
-				matrix[step+1][x1][z] = (0, 0)
-				matrix[step+1][x1][z-1] = (0, 0)
-
-			while step > cur_floor:
-				#print("Generating stairs at step ", step)
-				# stairs
-				matrix[step][x][z] = (109, 0)
-				matrix[step][x][z-1] = (109, 0)
-				#foundation
-				for h in range(cur_floor+1, step):
-					matrix[h][x][z] = (98, 0)
-					matrix[h][x][z-1] = (98, 0)
-				
-				step -= 1
-				x -= 1
-		if floor % 4 == 1:
-			#print("At 2")
-			x = x_max-1
-			z = z_min+1
-			for z1 in range(z, z+3):
-				matrix[step+1][x][z1] = (0, 0)
-				matrix[step+1][x-1][z1] = (0, 0)
-			while step > cur_floor:
-				#print("Generating stairs at step ", step)
-				matrix[step][x][z] = (109, 3)
-				matrix[step][x-1][z] = (109, 3)
-				for h in range(cur_floor+1, step):
-					matrix[h][x][z] = (98, 0)
-					matrix[h][x-1][z] = (98, 0)
-				step -= 1
-				z += 1
-		if floor % 4 == 2:
-			#print("At 1")
-			x = x_min+1
-			z = z_min+1
-			for x1 in range(x, x+3):
-				matrix[step+1][x1][z] = (0, 0)
-				matrix[step+1][x1][z+1] = (0, 0)
-			while step > cur_floor:
-				#print("Generating stairs at step ", step)
-				matrix[step][x][z] = (109, 1)
-				matrix[step][x][z+1] = (109, 1)
-				for h in range(cur_floor+1, step):
-					matrix[h][x][z] = (98, 0)
-					matrix[h][x][z+1] = (98, 0)
-				step -= 1
-				x += 1
-		if floor % 4 == 3:
-			#print("At 1")
-			x = x_min+1
-			z = z_max-1
-			for z1 in range(z, z-3, -1):
-				matrix[step+1][x][z1] = (0, 0)
-				matrix[step+1][x+1][z1] = (0, 0)
-			while step > cur_floor:
-				#print("Generating stairs at step ", step)
-				matrix[step][x][z] = (109, 2)
-				matrix[step][x+1][z] = (109, 2)
-				for h in range(cur_floor+1, step):
-					matrix[h][x][z] = (98, 0)
-					matrix[h][x+1][z] = (98, 0)
-				step -= 1
-				z -= 1
-		floor += 1
-		cur_floor += floor_size
-
-def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
+def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 	#print("Generating interior!")
 	cur_floor = h_min
 	floor = 0
@@ -212,8 +158,17 @@ def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_
 					matrix[h][x][z] = (98, 0)
 					matrix[h][x][z-1] = (98, 0)
 				step -= 1
-				x += 1
+				x += 1	
 
+		floor += 1
+		cur_floor += floor_size
+
+def generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
+
+	cur_floor = h_min
+	cur_floor_ceiling = cur_floor+floor_size
+	floor = 0
+	while cur_floor < h_max:
 		# generating separating wall between hall and apartments
 		for h in range(cur_floor, cur_floor+floor_size):
 			for x in range(x_min, x_max):
@@ -223,49 +178,55 @@ def generateFloors_new(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_
 		matrix[cur_floor+2][door_x][z_max-6] = (64,8)
 		matrix[cur_floor+1][door_x][z_max-6] = (64,3)
 
-		generateInterior(matrix, cur_floor, cur_floor+floor_size, x_min, x_max, z_min, z_max-6)		
-
 		floor += 1
 		cur_floor += floor_size
 
-def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
 	
-	# bed
-	#matrix[h_min+1][x_max-1][z_min+1] = (26,11)
-	#matrix[h_min+1][x_max-2][z_min+1] = (26,3)
+	cur_floor = h_min
+	cur_floor_ceiling = cur_floor+floor_size
+	floor = 0
+	while cur_floor < h_max:
 
-	# bed (wool)
-	matrix[h_min+1][x_max-1][z_min+1] = (35,14)
-	matrix[h_min+1][x_max-2][z_min+1] = (35,14)
+		# bed
+		#matrix[h_min+1][x_max-1][z_min+1] = (26,11)
+		#matrix[h_min+1][x_max-2][z_min+1] = (26,3)
 
-	x_mid = x_max - int((x_max - x_min)/2)
-	z_mid = z_max - int((z_max - z_min)/2)
+		# bed (wool)
+		matrix[cur_floor+1][x_max-1][z_min+1] = (35,14)
+		matrix[cur_floor+1][x_max-2][z_min+1] = (35,14)
 
-	# table
-	matrix[h_min+1][x_mid][z_mid] = (85,0)
-	matrix[h_min+2][x_mid][z_mid] = (72,0)
-	matrix[h_min+1][x_mid-1][z_mid] = (53, 1)
-	matrix[h_min+1][x_mid+1][z_mid] = (53, 0)
+		x_mid = x_max - int((x_max - x_min)/2)
+		z_mid = z_max - int((z_max - z_min)/2)
 
-	# bookshelf
-	matrix[h_min+1][x_max-1][z_max-1] = (47,0)
-	matrix[h_min+1][x_max-2][z_max-1] = (47,0)
-	matrix[h_min+2][x_max-1][z_max-1] = (47,0)
-	matrix[h_min+2][x_max-2][z_max-1] = (47,0)
+		# table
+		matrix[cur_floor+1][x_mid][z_mid] = (85,0)
+		matrix[cur_floor+2][x_mid][z_mid] = (72,0)
+		matrix[cur_floor+1][x_mid-1][z_mid] = (53, 1)
+		matrix[cur_floor+1][x_mid+1][z_mid] = (53, 0)
 
-	# couch
-	matrix[h_min+1][x_min+4][z_max-1] = (68, 5)
-	matrix[h_min+1][x_min+3][z_max-1] = (53, 2)
-	matrix[h_min+1][x_min+2][z_max-1] = (53, 2)
-	matrix[h_min+1][x_min+1][z_max-1] = (68, 4)
+		# bookshelf
+		matrix[cur_floor+1][x_max-1][z_max-1] = (47,0)
+		matrix[cur_floor+1][x_max-2][z_max-1] = (47,0)
+		matrix[cur_floor+2][x_max-1][z_max-1] = (47,0)
+		matrix[cur_floor+2][x_max-2][z_max-1] = (47,0)
 
-	# chandelier
-	x_mid = x_min + (x_max-x_min)/2
-	z_mid = z_min + (z_max-z_min)/2
-	matrix[h_max-1][x_mid][z_mid] = (85,0)
-	matrix[h_max-2][x_mid][z_mid] = (85,0)
-	matrix[h_max-3][x_mid][z_mid] = (169,0)
+		# couch
+		matrix[cur_floor+1][x_min+4][z_max-1] = (68, 5)
+		matrix[cur_floor+1][x_min+3][z_max-1] = (53, 2)
+		matrix[cur_floor+1][x_min+2][z_max-1] = (53, 2)
+		matrix[cur_floor+1][x_min+1][z_max-1] = (68, 4)
 
+		# chandelier
+		x_mid = x_min + (x_max-x_min)/2
+		z_mid = z_min + (z_max-z_min)/2
+		matrix[cur_floor_ceiling-1][x_mid][z_mid] = (85,0)
+		matrix[cur_floor_ceiling-2][x_mid][z_mid] = (85,0)
+		matrix[cur_floor_ceiling-3][x_mid][z_mid] = (169,0)
+
+		matrix[cur_floor_ceiling-3][x_mid][z_mid] = (169,0)
+
+		cur_floor += floor_size
 
 def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 
@@ -289,6 +250,7 @@ def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min,
 				matrix[cur_floor][x][z] = wall
 
 		cur_floor += floor_size
+
 
 def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
 	z_window_size = z_max-random.randint(z_min+2, z_max-2)
@@ -329,6 +291,42 @@ def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_mi
 
 		cur_floor += floor_size
 
+def generateBuildingWindows_x(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
+	z_window_size = z_max-random.randint(z_min+2, z_max-2)
+
+	# windows
+	cur_floor = h_min+1
+	while cur_floor < h_max:
+
+		window_h = cur_floor + int(math.ceil(floor_size/2))
+	 
+		#depth = z_max - z_min
+		#middle = z_min + int(depth/2)
+		#for z in range(middle - int(z_window_size/2), middle + int(math.ceil(z_window_size/2)),4):
+		for z in range(z_min+1, z_max-1, 3):
+			matrix[window_h][x_min][z] = (20,0)
+		 	matrix[window_h-1][x_min][z] = (20,0)
+		 	matrix[window_h][x_min][z+1] = (20,0)
+		 	matrix[window_h-1][x_min][z+1] = (20,0)
+
+		cur_floor += floor_size
+
+def generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
+	x_window_size = x_max-random.randint(x_min+2, x_max-2)
+
+	# windows
+	cur_floor = h_min+1
+	while cur_floor < h_max:
+
+		window_h = cur_floor + int(math.ceil(floor_size/2))
+		for x in range(x_min+1, x_max-1, 3):
+			matrix[window_h][x][z_min] = (20,0)
+			matrix[window_h-1][x][z_min] = (20,0)
+			matrix[window_h][x+1][z_min] = (20,0)
+			matrix[window_h-1][x+1][z_min] = (20,0)
+
+		cur_floor += floor_size
+
 def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
 	chance = random.random()
@@ -352,6 +350,36 @@ def generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door
 		matrix[h_min+2][pos][z_max] = (64,8)
 		matrix[h_min+1][pos][z_max] = (64,3)
 		return (h_min+1, pos, z_max)
+
+def generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+
+	lader_space = x_max-8
+	pos = RNG.randint(x_min+1, lader_space)
+	#pos = x_min+1
+	#chance = RNG.random()
+	#if chance < 0.50:
+	#matrix[h_min+2][pos][z_min] = (64,8)
+	#matrix[h_min+1][pos][z_min] = (64,1)
+	#return (h_min, pos, z_min)
+	#else:
+	matrix[h_min+2][pos][z_max] = (64,8)
+	matrix[h_min+1][pos][z_max] = (64,3)
+	return (h_min, pos, z_max)
+
+def generateDoor_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+
+	lader_space = z_max-8
+	pos = RNG.randint(z_min+1, lader_space)
+	#pos = z_min+1
+	#chance = RNG.random()
+	#if chance < 0.50:
+	#matrix[h_min+2][x_min][pos] = (64,9)
+	#matrix[h_min+1][x_min][pos] = (64,0)
+	#return (h_min, x_min, pos)
+	#else:
+	matrix[h_min+2][x_max][pos] = (64,9)
+	matrix[h_min+1][x_max][pos] = (64,2)
+	return (h_min, x_max, pos)
 
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	for h in range(h_min, h_max):
