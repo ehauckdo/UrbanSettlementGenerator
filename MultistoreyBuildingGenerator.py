@@ -3,6 +3,7 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 import RNG
+import logging
 
 def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 
@@ -55,7 +56,8 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
 	building.constructionArea = (h_min, h_max, x_min, x_max, z_min, z_max)
 
-	#print("Building building at ", (h_min, h_max, x_min, x_max, z_min, z_max))
+	logging.info("Generating house at area {}".format(building.area))
+	logging.info("Construction area {}".format(building.constructionArea))
 
 	#wall = (43,random.randint(0,8))
 	wall = (159,random.randint(0,15))
@@ -71,34 +73,23 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options):
 		h_max -= 1
 
 	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
-	if RNG.random() > 0.5:
-
-		building.orientation = "x"
-		building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
-		if building.door[2] == z_min:
-			building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
-		else:
-			building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
-		generateBuildingWindows_x(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	#if RNG.random() > 0.5:
+	building.orientation = "x"
+	building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
+	if building.door[2] == z_min:
+		building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
 	else:
-		building.orientation = "z"
-		building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
-		if building.door[1] == x_min:
-			building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
-		else:
-			building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
-		generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+		building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
+	generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
+	#else:
+	#	building.orientation = "z"
+	#	building.door = generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max)
+	#	if building.door[1] == x_min:
+	#		building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
+	#	else:
+	#		building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
+	#	generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
 
-	#generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
-	#building.door = generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
-	#if building.door[2] == z_min:
-	#	building.entranceLot = (building.door[0], building.door[1], building.area.z_min)
-	#elif building.door[2] == z_max:
-	#	building.entranceLot = (building.door[0], building.door[1], building.area.z_max)
-	#if building.door[1] == x_min:
-	#	building.entranceLot = (building.door[0], building.area.x_min, building.door[2])
-	#elif building.door[1] == x_max:
-	#	building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
 	generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
@@ -130,8 +121,8 @@ def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max,
 	while cur_floor < h_max:
 		step = cur_floor+floor_size-1
 		if floor % 2 == 0:
-			x = x_max-1
-			z = z_max-1
+			x = x_max-2
+			z = z_max-2
 			for x1 in range(x, x-3, -1):
 				matrix[step+1][x1][z] = (0, 0)
 				matrix[step+1][x1][z-1] = (0, 0)
@@ -146,8 +137,8 @@ def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max,
 				step -= 1
 				x -= 1
 		if floor % 2 == 1:
-			x = x_min+1
-			z = z_max-1
+			x = x_min+2
+			z = z_max-2
 			for x1 in range(x, x+3):
 				matrix[step+1][x1][z] = (0, 0)
 				matrix[step+1][x1][z-1] = (0, 0)
@@ -318,12 +309,19 @@ def generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_
 	cur_floor = h_min+1
 	while cur_floor < h_max:
 
+		
 		window_h = cur_floor + int(math.ceil(floor_size/2))
-		for x in range(x_min+1, x_max-1, 3):
+		for x in range(x_min+2, x_max-1, 3):
+			# apartment windows
 			matrix[window_h][x][z_min] = (20,0)
 			matrix[window_h-1][x][z_min] = (20,0)
 			matrix[window_h][x+1][z_min] = (20,0)
 			matrix[window_h-1][x+1][z_min] = (20,0)
+			# corridor windows
+			matrix[window_h][x][z_max] = (20,0)
+			matrix[window_h-1][x][z_max] = (20,0)
+			matrix[window_h][x+1][z_max] = (20,0)
+			matrix[window_h-1][x+1][z_max] = (20,0)
 
 		cur_floor += floor_size
 

@@ -37,7 +37,7 @@ def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partiti
 def quadtreeSpacePartitioning(y_init, y_end, x_init, x_end, z_init, z_end, partitions=[], stop_chance=0, partition_min=25):
 
 	if RNG.random() < stop_chance:
-		print("Stopping at level ", stop_chance)
+		#print("Stopping at level ", stop_chance)
 		partitions.append((y_init, y_end, x_init, x_end, z_init, z_end))
 		return partitions
 

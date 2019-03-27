@@ -1,3 +1,5 @@
+import logging
+
 class Node():
     """A node class for A* Pathfinding"""
 
@@ -14,7 +16,7 @@ class Node():
 
 def aStar(p1, p2, pathMap, height_map):
 
-	print("==== P1:  ", p1, ", ==== P2: ", p2)
+	logging.info("(A*) Searching a path between {} and {}".format(p1, p2))
 	# header = "hea "
 	# for z in range(40, 90):
 	# 	header += str(z)+" "
@@ -48,7 +50,7 @@ def aStar(p1, p2, pathMap, height_map):
 			if item.f < current_node.f:
 			    current_node = item
 			    current_index = index
-		print("-- Current node: ", current_node.position)
+		#print("-- Current node: ", current_node.position)
 
 		# Pop current off open list, add to closed list
 		open_list.pop(current_index)
@@ -69,7 +71,7 @@ def aStar(p1, p2, pathMap, height_map):
 
 			# Get node position
 			node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-			print("Testing new position ", node_position)
+			#print("Testing new position ", node_position)
 
 			# Make sure within range
 			if node_position[0] > (len(pathMap) - 1) or node_position[0] < 0 or node_position[1] > (len(pathMap[len(pathMap)-1]) -1) or node_position[1] < 0:

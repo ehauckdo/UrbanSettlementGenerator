@@ -6,7 +6,7 @@ def getStateFromString(state):
     return int(hashlib.md5(state).hexdigest()[:8], 16)
 
 rng_dictionary = {}
-rng_dictionary[getStateFromString("default")] = np.random.RandomState()
+rng_dictionary[getStateFromString("default")] = np.random.RandomState(10)
 
 def randint(minimum, maximum, state="default"):
 	if getStateFromString(state) not in rng_dictionary.keys():

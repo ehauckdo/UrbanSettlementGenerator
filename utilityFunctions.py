@@ -9,6 +9,7 @@ from AStar import aStar
 import RNG
 import copy
 import sys
+import pickle
 
 # These are a few helpful functions we hope you find useful to use
 
@@ -359,6 +360,7 @@ def hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, scoring_functio
 # given a box selection, returns a 2d matrix where each element is
 # the height of the first non-block air in that x, z position
 def getHeightMap(level, box):
+	logging.info("Calculating height map...")
 	terrain = [[0 for z in range(box.minz,box.maxz)] for x in range(box.minx,box.maxx)]
 	
 	for d, z in zip(range(box.minz,box.maxz), range(0, box.maxz-box.minz)):
@@ -368,7 +370,6 @@ def getHeightMap(level, box):
 	#print("Terrain Map: ")
 	#for x in range(0, box.maxx-box.minx):
 	#	print(terrain[x])
-
 	return terrain
 
 def getPathMap(height_map, width, depth):
@@ -425,10 +426,10 @@ def getPathMap(height_map, width, depth):
 					pathMap[x][z].up = -1
 			
 
-	print("PathMap: ")
-	for x in range(width):
-		for z in range(depth):
-			print(x, z, pathMap[x][z])
+	#print("PathMap: ")
+	#for x in range(width):
+	#	for z in range(depth):
+	#		logging.info("[{}],[{}]: {}".format(x, z, pathMap[x][z]))
 
 	return pathMap
 
@@ -583,8 +584,7 @@ def pavementConnection_old(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementB
 		#h = height_map[x][z_p1]
 		h = 100
 		matrix[h][x][z_p1] = pavementBlock
-		for i in range(5):
-			matrix[h+i][x][z_p1] = (0,0)
+		
 		
 
 	for z in twoway_range(z_p1, z_p2):
@@ -593,14 +593,49 @@ def pavementConnection_old(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementB
 		matrix[h][x_p2][z] = pavementBlock
 		matrix[h+1][x_p2][z] = (0,0)
 
-def pavementConnection(matrix, path, build1, build2, height_map, pavementBlock = (4,0)):
-	print("Connecting ", build1.entranceLot, build2.entranceLot)
-	for p in path:
-		x = p[0]
-		z = p[1]
-		#h = height_map[x][z]
-		h = 100
+def pavementConnection(level, matrix, path, build1, build2, height_map, pavementBlock = (4,0), baseBlock=(2,0)):
+	logging.info("Connecting road between {} and {}".format(build1.entranceLot, build2.entranceLot))
+	block = previous_block = path[0]
+	x = block[0]
+	z = block[1]
+	h = 100
+
+	print
+	for i in range(0, len(path)-1):
+		block = path[i]
+		x = block[0]
+		z = block[1]
+		#h = 100
+		h = height_map[x][z]
 		matrix[h][x][z] = pavementBlock
+		for j in range(1, 5):
+			matrix[h+j][x][z] = (0,0)
+
+		next_block = path[i+1]
+		# check if we are moving in the x axis (so to add a new pavement
+		# on the z-1, z+1 block)
+		if x != next_block[0]:
+			# if that side block is walkable
+			if z-1 >= 0 and height_map[x][z-1] != -1: 
+				matrix[h][x][z-1] = pavementBlock
+				for j in range(1,5):
+					matrix[h+j][x][z-1] = (0,0)
+			if z+1 < len(matrix[h][x]) and height_map[x][z+1] != -1:
+				matrix[h][x][z+1] = pavementBlock
+				for j in range(1,5):
+					matrix[h+j][x][z+1] = (0,0)
+
+		elif z != next_block[1]:
+			# check if we are moving in the z axis (so add a new pavement
+			# on the x-1 block) and if that side block is walkable
+			if x-1 >= 0 and height_map[x-1][z] != -1:
+				matrix[h][x-1][z] = pavementBlock
+				for j in range(1,5):
+					matrix[h+j][x-1][z] = (0,0)
+			if x+1 < len(matrix[h]) and height_map[x+1][z] != -1:
+				matrix[h][x+1][z] = pavementBlock
+				for j in range(1,5):
+					matrix[h+j][x+1][z] = (0,0)
 
 def getMST(buildings, pathMap, height_map):
 	MST = []
@@ -608,17 +643,15 @@ def getMST(buildings, pathMap, height_map):
 	partitions = copy.deepcopy(buildings)
 
 	distance_dict = {}
-	print("All partitions")
+	#print("All partitions")
 	for p in partitions:
 		distance_dict[p.entranceLot] = {}
-		print p.entranceLot
+	#	print p.entranceLot
 
 	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
-	print("Selected: " , selected_vertex)
+	#print("Selected: " , selected_vertex)
 	vertices.append(selected_vertex)
 	partitions.remove(selected_vertex)
-
-	sys.stdout.flush()
 
 	while len(partitions) > 0:
 	
@@ -649,10 +682,10 @@ def getMST(buildings, pathMap, height_map):
 				#	edges.append((distance, distance, v, p))
 				else:
 					edges.append((-1, None, v, p))
-					print("NO PATHS BETWEEN ", p1, p2)
+					#print("NO PATHS BETWEEN ", p1, p2)
 
 		edges = sorted(edges)
-		print("Edges: ")
+		#print("Edges: ")
 		for e in edges:
 			print(e[0], e[2].entranceLot, e[3].entranceLot)
 
@@ -660,7 +693,7 @@ def getMST(buildings, pathMap, height_map):
 			MST.append((edges[0][0], edges[0][1], edges[0][2], edges[0][3]))
 		partitions.remove(edges[0][3])
 		vertices.append(edges[0][3])
-		print("partitions left: ", len(partitions))
+		#print("partitions left: ", len(partitions))
 		#print("MST: ")
 		#for m in MST:
 		#	print(m)
@@ -745,3 +778,12 @@ def updateHeightMap(height_map, x_min, x_max, z_min, z_max, height):
 		for z in range(z_min, z_max+1):
 			height_map[x][z] = height
 
+def saveFiles(height_map, pathMap, all_buildings):
+	with open('TestMap1HeightMap', 'wb') as matrix_file:
+ 		pickle.dump(height_map, matrix_file)
+
+ 	with open('TestMap1PathMap', 'wb') as matrix_file:
+ 		pickle.dump(pathMap, matrix_file)
+
+	with open('TestMap1Buildings', 'wb') as matrix_file:
+		pickle.dump(all_buildings, matrix_file)
