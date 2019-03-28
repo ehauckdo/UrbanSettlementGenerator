@@ -778,12 +778,12 @@ def updateHeightMap(height_map, x_min, x_max, z_min, z_max, height):
 		for z in range(z_min, z_max+1):
 			height_map[x][z] = height
 
-def saveFiles(height_map, pathMap, all_buildings):
-	with open('TestMap1HeightMap', 'wb') as matrix_file:
+def saveFiles(height_map, pathMap, all_buildings, file_name1, file_name2, file_name3):
+	with open(file_name1, 'wb') as matrix_file:
  		pickle.dump(height_map, matrix_file)
 
- 	with open('TestMap1PathMap', 'wb') as matrix_file:
+ 	with open(file_name2, 'wb') as matrix_file:
  		pickle.dump(pathMap, matrix_file)
 
-	with open('TestMap1Buildings', 'wb') as matrix_file:
+	with open(file_name3, 'wb') as matrix_file:
 		pickle.dump(all_buildings, matrix_file)

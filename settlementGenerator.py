@@ -65,53 +65,185 @@ def perform_new(level, box, options, height_map=None):
 
 def perform(level, box, options, height_map=None):
 
+	logging.info("BoundingBox coordinates: ({},{}),({},{}),({},{})".format(box.miny, box.maxy, box.minx, box.maxx, box.minz, box.maxz))
+
 	# ==== PREPARATION =====
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	logging.info("Selection box dimensions {}, {}, {}".format(width,height,depth))
 	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
 	world_space = utilityFunctions.dotdict({"y_min": 0, "y_max": height-1, "x_min": 0, "x_max": width-1, "z_min": 0, "z_max": depth-1})
 
+
 	# calculate height map if not passed as param
 	if height_map == None:
 		height_map = utilityFunctions.getHeightMap(level,box)
 	else:
-		print("Skipping height map generation")
+		logging.info("Skipping height map generation")
 	
 	# ==== PARTITIONING OF NEIGHBOURHOODS ==== 
-	(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
+	#(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
 
 	# ====  GENERATING CITY CENTER ==== 
 	all_buildings = []
-	space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
-	number_of_tries = 10
+	# space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
+	# number_of_tries = 10
+	# minimum_h = 3 
+	# minimum_w = 25
+	# mininum_d = 25
+
+	# minimum_lots = 10
+	# available_lots = 0
+	# maximum_tries = 200
+	# current_try = 0
+	# bestPartitioning = []
+
+	# # run the partitioning algorithm for number_of_tries to get different partitionings of the same area
+	# logging.info("Generating {} different partitionings for the the City Centre {}".format(number_of_tries, space))
+	# partitioning_list = []
+	# partitioning = None
+	# threshold = 1
+	# while available_lots < minimum_lots and current_try < maximum_tries:
+
+	# 	for i in range(number_of_tries):
+	# 		#partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [], partition_min=partition_min, valid_min=valid_min)
+	# 		partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+
+	# 		valid_partitioning = []
+	# 		for p in partitioning:
+	# 			(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
+	# 			failed_conditions = []
+	# 			cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
+	# 			if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+	# 			cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
+	# 			if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+	# 			cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
+	# 			if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+	# 			if cond1 and cond2 and cond3:
+	# 				valid_partitioning.append(p)
+	# 			else:
+	# 				logging.info("Failed Conditions {}".format(failed_conditions))
+
+
+	# 		partitioning_list.append((len(valid_partitioning), valid_partitioning))
+	# 		logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
+
+	# 		#valid_partitioning = cleanPartition(partitioning, height_map, minimum_h, minimum_w, mininum_d)
+	# 		#partitioning_list.append((len(valid_partitioning), valid_partitioning))
+		
+	# 	# order partitions by number of valid lots and get the one with the highest
+	# 	partitioning_list = sorted(partitioning_list, reverse=True)
+	# 	partitioning = partitioning_list[0][1]
+
+	# 	if partitioning_list[0][0] > len(bestPartitioning):
+	# 		bestPartitioning = partitioning
+
+	# 	available_lots = len(bestPartitioning)
+	# 	logging.info("Current partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+
+	# 	threshold += 1
+	# 	current_try += 1
+	
+	# logging.info("Final lots ({}) for the City Centre {}: ".format(len(partitioning), space))
+	# for p in partitioning:
+	# 	logging.info("\t{}".format(p))
+
+	# #return #################
+
+	# for partition in partitioning:
+	# 	building = fillBuilding(level, box, matrix, height, width, depth, partition, height_map, options)
+	# 	all_buildings.append(building)
+
+	# # ==== GENERATING NEIGHBOURHOODS ==== 
+	# for partitioning in neighbourhoods:
+
+	# 	space = utilityFunctions.dotdict({"y_min": partitioning[0], "y_max": partitioning[1], "x_min": partitioning[2], "x_max": partitioning[3], "z_min": partitioning[4], "z_max": partitioning[5]})
+	# 	minimum_h = 3 
+	# 	minimum_w = 16
+	# 	mininum_d = 16
+
+	# 	minimum_lots = 10
+	# 	available_lots = 0
+	# 	maximum_tries = 200
+	# 	current_try = 0
+	# 	bestPartitioning = []
+
+	# 	logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, space))
+	# 	partitioning_list = []
+	# 	threshold = 1
+	# 	while available_lots < minimum_lots and current_try < maximum_tries:
+		
+	# 		for i in range(number_of_tries):
+	# 			#partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [], partition_min=partition_min, valid_min=valid_min)
+	# 			partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+
+	# 			valid_partitioning = []
+	# 			for p in partitioning:
+	# 				(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
+	# 				failed_conditions = [] 
+	# 				cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
+	# 				if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+	# 				cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
+	# 				if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+	# 				cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
+	# 				if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+	# 				if cond1 and cond2 and cond3:
+	# 					valid_partitioning.append(p)
+	# 					logging.info("Passed the 3 conditions!")
+	# 				else:
+	# 					logging.info("Failed Conditions {}".format(failed_conditions))
+
+	# 			partitioning_list.append((len(valid_partitioning), valid_partitioning))
+	# 			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
+		
+	# 		# order partitions by number of valid lots and get the one with the highest
+	# 		partitioning_list = sorted(partitioning_list, reverse=True)
+	# 		partitioning = partitioning_list[0][1]
+
+	# 		if partitioning_list[0][0] > len(bestPartitioning):
+	# 			bestPartitioning = partitioning
+
+	# 		available_lots = len(bestPartitioning)
+	# 		logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+
+	# 		threshold += 1
+	# 		current_try += 1
+
+	# 		partitioning_list = sorted(partitioning_list, reverse=True)
+	# 		partitioning = partitioning_list[0][1]
+
+	# 	logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), space))
+	# 	for p in partitioning:
+	# 		logging.info("\t{}".format(p))
+
+	# 	for partition in partitioning:
+	# 		house = fillHouse(level, box, matrix, height, width, depth, partition, height_map, options)
+	# 		all_buildings.append(house)
+
+
 	minimum_h = 3 
-	minimum_w = 25
-	mininum_d = 25
+	minimum_w = 16
+	mininum_d = 16
 
-	minimum_lots = 4
+	number_of_tries = 10
+	minimum_lots = 100
 	available_lots = 0
+	maximum_tries = 100
+	current_try = 0
+	bestPartitioning = []
 
-	# run the partitioning algorithm for number_of_tries to get different partitionings of the same area
-	logging.info("Generating {} different partitionings for the the City Centre {}".format(number_of_tries, space))
+	logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, world_space))
 	partitioning_list = []
-	partitioning = None
 	threshold = 1
-	while available_lots < minimum_lots:
-
+	while available_lots < minimum_lots and current_try < maximum_tries:
+	
 		for i in range(number_of_tries):
-			#partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [], partition_min=partition_min, valid_min=valid_min)
-			partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+			partitioning = binarySpacePartitioning(world_space.y_min, world_space.y_max, world_space.x_min, world_space.x_max, world_space.z_min, world_space.z_max, [])
+			#partitioning = quadtreeSpacePartitioning(world_space.y_min, world_space.y_max, world_space.x_min, world_space.x_max, world_space.z_min, world_space.z_max, [])
 
 			valid_partitioning = []
 			for p in partitioning:
-				
-				y_min = p[0]
-				y_max = p[1]
-				x_min = p[2] 
-				x_max = p[3]
-				z_min = p[4]
-				z_max = p[5] 
-				failed_conditions = []
+				(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
+				failed_conditions = [] 
 				cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
 				if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
 				cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
@@ -120,114 +252,69 @@ def perform(level, box, options, height_map=None):
 				if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
 				if cond1 and cond2 and cond3:
 					valid_partitioning.append(p)
+					logging.info("Passed the 3 conditions!")
 				else:
 					logging.info("Failed Conditions {}".format(failed_conditions))
 
-
 			partitioning_list.append((len(valid_partitioning), valid_partitioning))
 			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
-
-			#valid_partitioning = cleanPartition(partitioning, height_map, minimum_h, minimum_w, mininum_d)
-			#partitioning_list.append((len(valid_partitioning), valid_partitioning))
-		
+	
 		# order partitions by number of valid lots and get the one with the highest
 		partitioning_list = sorted(partitioning_list, reverse=True)
 		partitioning = partitioning_list[0][1]
 
-		available_lots = partitioning_list[0][0]
-		logging.info("Current partitioning with most available_lots: {} using threshold {}".format(available_lots, threshold))
+		if partitioning_list[0][0] > len(bestPartitioning):
+			bestPartitioning = partitioning
+
+		available_lots = len(bestPartitioning)
+		logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+
 		threshold += 1
-	
-	logging.info("Generated lots for the City Centre {}: ".format(space))
-	for p in partitioning:
-		logging.info("\t{}".format(p))
+		current_try += 1
 
-	return #################
-
-	for partition in partitioning:
-		building = fillBuilding(level, box, matrix, height, width, depth, partition, height_map, options)
-		all_buildings.append(building)
-
-	# ==== GENERATING NEIGHBOURHOODS ==== 
-	for partitioning in neighbourhoods:
-
-		space = utilityFunctions.dotdict({"y_min": partitioning[0], "y_max": partitioning[1], "x_min": partitioning[2], "x_max": partitioning[3], "z_min": partitioning[4], "z_max": partitioning[5]})
-		minimum_h = 3 
-		minimum_w = 16
-		mininum_d = 16
-
-		logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, space))
-		partitioning_list = []
-		for i in range(number_of_tries):
-			#partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [], partition_min=partition_min, valid_min=valid_min)
-			partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
-
-			valid_partitioning = []
-			for p in partitioning:
-				threshold = 100
-				y_min = p[0]
-				y_max = p[1]
-				x_min = p[2] 
-				x_max = p[3]
-				z_min = p[4]
-				z_max = p[5] 
-				cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
-				if cond1 == False: logging.info("Failed Condition 1!")
-				cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
-				if cond2 == False: logging.info("Failed Condition 2!")
-				cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
-				if cond3 == False: logging.info("Failed Condition 3!")
-				if cond1 and cond2 and cond3:
-					valid_partitioning.append(p)
-					logging.info("Passed the 3 conditions!")		
-
-			partitioning_list.append((len(valid_partitioning), valid_partitioning))
-			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
-	
 		partitioning_list = sorted(partitioning_list, reverse=True)
 		partitioning = partitioning_list[0][1]
 
-		logging.info("Generated lots for the neighbourhood {}: ".format(space))
-		for p in partitioning:
-			logging.info("\t{}".format(p))
+	logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), world_space))
+	for p in partitioning:
+		logging.info("\t{}".format(p))
 
-		for partition in partitioning:
-			house = fillHouse(level, box, matrix, height, width, depth, partition, height_map, options)
-			all_buildings.append(house)
+	for partition in partitioning:
+		house = fillHouse(level, box, matrix, height, width, depth, partition, height_map, options)
+		all_buildings.append(house)
  
- 	# ==== GENERATE PATH MAP  ==== 
+	# ==== GENERATE PATH MAP  ==== 
  	# generate a path map that gives the cost of moving to each neighbouring cell
 	pathMap = utilityFunctions.getPathMap(height_map, width, depth)
 
+	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings, "TestMap2HeightMap", "TestMap2PathMap", "TestMap2AllBuildings")
 
-	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings)
-
-	# ==== CONNECTING BUILDINGS WITH ROADS  ==== 
-	MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
-	logging.info("MST result: ")
-	for m in MST:
-		logging.info(m)
+	# # ==== CONNECTING BUILDINGS WITH ROADS  ==== 
+	# MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
+	# logging.info("MST result: ")
+	# for m in MST:
+	# 	logging.info(m)
 	
-	pavementBlockID = 4 #171
-	pavementBlockSubtype = 0
-	for m in MST:
-		p1 = m[1]
-		p2 = m[2]
-		logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
-		#path = m[1]
+	# pavementBlockID = 4 #171
+	# pavementBlockSubtype = 0
+	# for m in MST:
+	# 	p1 = m[1]
+	# 	p2 = m[2]
+	# 	logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
+	# 	#path = m[1]
 
-		p1_entrancePoint = p1.entranceLot
-		p2_entrancePoint = p2.entranceLot
+	# 	p1_entrancePoint = p1.entranceLot
+	# 	p2_entrancePoint = p2.entranceLot
 
-	 	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
-	 	if path != None:
-	 		logging.info("Found path between {} and {}".format(p1.entranceLot, p2.entranceLot))
-		 	utilityFunctions.pavementConnection(level, matrix, path, p1, p2, height_map, (pavementBlockID, pavementBlockSubtype))
-		else:
-			logging.info("Couldnt find path between ", p1.entranceLot, p2.entranceLot)
-	 		utilityFunctions.pavementConnection_old(matrix, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
+	#  	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
+	#  	if path != None:
+	#  		logging.info("Found path between {} and {}".format(p1.entranceLot, p2.entranceLot))
+	# 	 	utilityFunctions.pavementConnection(level, matrix, path, p1, p2, height_map, (pavementBlockID, pavementBlockSubtype))
+	# 	else:
+	# 		logging.info("Couldnt find path between ", p1.entranceLot, p2.entranceLot)
+	#  		utilityFunctions.pavementConnection_old(matrix, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
 	 	
-		#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
+	# 	#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
 	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
