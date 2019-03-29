@@ -6,7 +6,7 @@ import math
 import RNG
 import logging
 
-def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, ceiling = (5, RNG.randint(1,5))):
+def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, ceiling = None):
 
 	house = utilityFunctions.dotdict()
 	house.type = "house"
@@ -21,10 +21,8 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, cei
 	logging.info("Generating house at area {}".format(house.area))
 	logging.info("Construction area {}".format((h_min, h_max, x_min, x_max, z_min, z_max)))
 	
-	#wall = (options["Walls Material Type"].ID, RNG.randint(options["Walls Material Subtype (min)"],options["Walls Material Subtype (max)"]))
-	#ceiling = (options["Ceiling Material Type"].ID, RNG.randint(options["Ceiling Material Subtype (min)"],options["Ceiling Material Subtype (max)"]))
 	wall = (43, RNG.randint(11,15))
-	#ceiling = (5, RNG.randint(1,5))
+	ceiling = (5, RNG.randint(1,5)) if ceiling == None else ceiling
 	floor = wall
 	door = (0,0)
 
