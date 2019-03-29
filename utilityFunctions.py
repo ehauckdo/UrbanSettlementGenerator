@@ -6,6 +6,7 @@ from pymclevel import alphaMaterials, MCSchematic, MCLevel, BoundingBox
 from mcplatform import *
 from collections import defaultdict
 from AStar import aStar
+from Matrix import Matrix
 import RNG
 import copy
 import sys
@@ -54,7 +55,7 @@ def drillDown(level, x, z, miny, maxy):
 	return blocks
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
-def findTerrain(level, x, z, miny, maxy):
+def findTerrain_old(level, x, z, miny, maxy):
 	blocks = []
 	for y in xrange(miny, maxy):
 		#print("y: ", y, " block: ", level.blockAt(x, y, z))
@@ -64,25 +65,6 @@ def findTerrain(level, x, z, miny, maxy):
 	return -1
 	
 
-# Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
-def findTerrainNew(level, x, z, miny, maxy):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
-	ground_like = [1, 2, 3]
-	water_like = [8, 9, 10, 11]
-
-	blocks = []
-	for y in xrange(maxy-1, miny-1, -1):
-		#print("y: ", y, " block: ", level.blockAt(x, y, z))
-		if level.blockAt(x, y, z) in air_like:
-			continue
-		elif level.blockAt(x, y, z) in water_like:
-			return -1
-		else:
-			return y
-		#elif level.blockAt(x, y, z) in ground_like:
-		#	return y
-		# print level.blockAt(x,y,z)
-	return -1
 
 # returns a 2d matrix representing tree trunk locations on an x-z coordinate basis (bird's eye view) in the given box
 # *params*
@@ -215,6 +197,36 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 	output.append(np)
 	return output
 
+# Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
+def drillDown(level,box):
+	(width, height, depth) = utilityFunctions.getBoxSize(box)
+	blocks = []
+	for y in xrange(maxy, miny, -1):
+		blocks.append(level.blockAt(x, y, z))
+		# print level.blockAt(x,y,z)
+	return blocks
+
+# Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
+def findTerrain(level, x, z, miny, maxy):
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
+	ground_like = [1, 2, 3]
+	water_like = [8, 9, 10, 11]
+
+	blocks = []
+	for y in xrange(maxy-1, miny-1, -1):
+		#print("y: ", y, " block: ", level.blockAt(x, y, z))
+		if level.blockAt(x, y, z) in air_like:
+			continue
+		elif level.blockAt(x, y, z) in water_like:
+			return -1
+		else:
+			return y
+		#elif level.blockAt(x, y, z) in ground_like:
+		#	return y
+		# print level.blockAt(x,y,z)
+	return -1
+
+
 # class that allows easy indexing of dicts
 class dotdict(dict):
     """dot.notation access to dictionary attributes"""
@@ -227,80 +239,9 @@ class dotdict(dict):
         return self.get(attr, None)
 
 # generate and return 3d matrix as in the format matrix[h][w][d] 
-def generateMatrix(level, box, width, depth, height, options):
-
-	matrix = Matrix(level, box, height, width, depth)
-	#matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
-
-	#for y, h in zip(range(box.miny,box.maxy), range(0,height)):
-	#	for x, w in zip(range(box.minx,box.maxx), range(0,width)):
-	#		for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-	#			matrix[h][w][d] != dotdict({"value": level.blockAt(x,y,z), "changed": False})
-				
+def generateMatrix(level, box, width, depth, height):
+	matrix = Matrix(level, box, height, width, depth)			
 	return matrix
-
-class Matrix:
-
-	min_x = max_x = min_y = max_y = min_z = max_z = -1
-	width = height = depth = -1
-	matrix = None
-
-	def __init__(self, level, box, height, width, depth):
-		self.level = level
-		self.width = width
-		self.height = height
-		self.depth = depth
-		self.y_min = box.miny
-		self.y_max = box.maxy
-		self.x_min = box.minx
-		self.x_max = box.maxx
-		self.z_min = box.minz
-		self.z_max = box.maxz
-		self.matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
-		self.changed = [[[False for z in range(depth)] for x in range(width)] for y in range(height)]
-
-	def getValue(self, y,x,z):
-		if self.changed[y][x][z] == True:
-			return self.matrix[y][x][z]
-		else:
-			return self.level.blockAt(x,y,z)
-
-	def setValue(self, y,x,z, value):
-		self.matrix[y][x][z] = value
-		self.changed[y][x][z] = True
-
-	def isChanged(self, y,x,z):
-		return self.changed[y][x][z]
-
-	def getWorldX(self, x):
-		for world_x, matrix_x in zip(range(self.x_min,self.x_max), range(0,self.width)):
-			if matrix_x == x:
-				return world_x
-
-	def getWorldZ(self, z):
-		for world_z, matrix_z in zip(range(self.z_min,self.z_max), range(0,self.depth)):
-			if matrix_z == z:
-				return world_z
-
-	def getWorldY(self, y):
-		for world_y, matrix_y in zip(range(self.y_min,self.y_max), range(0,self.height)):
-			if matrix_y == y:
-				return world_y
-
-	def getMatrixX(self, x):
-		for world_x, matrix_x in zip(range(self.x_min,self.x_max), range(0, self.width)):
-			if world_x == x:
-				return matrix_x
-
-	def getMatrixZ(self, z):
-		for world_z, matrix_z in zip(range(self.z_min,self.z_max), range(0, self.depth)):
-			if world_z == z:
-				return matrix_z
-
-	def getMatrixY(self, y):
-		for world_y, matrix_y in zip(range(self.y_min,self.y_max), range(0, self.height)):
-			if world_y == y:
-				return matrix_y
 
 
 # get a subsection of a give arean partition based on the percentage
@@ -370,44 +311,16 @@ def getManhattanDistance(p1,p2):
 	distance = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 	return distance
 
-
-# Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
-def drillDown(level,box):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
-	blocks = []
-	for y in xrange(maxy, miny, -1):
-		blocks.append(level.blockAt(x, y, z))
-		# print level.blockAt(x,y,z)
-	return blocks
-
 def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	for h in range(h_min, h_max):
 		for x in range(x_min, x_max+1):
 			for z in range(z_min, z_max+1):
 				matrix[h][x][z] = (0,0)
 
-# algorithm to randomly find flat areas given a height map
-def getAreasSameHeight(box,terrain):
-	validAreas = []
-
-	for i in range(0, 1000):
-		random_x = RNG.randint(0, box.maxx-box.minx)
-		random_z = RNG.randint(0,box.maxz-box.minz)
-		size_x = 15
-		size_z = 15
-		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, size_x, size_z):
-			newValidArea = (random_x, random_x+size_x-1, random_z, random_z+size_z-1)
-			if newValidArea not in validAreas:
-				validAreas.append(newValidArea)
-
-	print("Valid areas found:")
-	validAreas = removeOverlaping(validAreas)
-	for a in validAreas:
-		print(a)
-
-	return validAreas
 
 
+# Given a partition and height map, return true if there's no water
+# or other unwalkable block inside that partition
 def hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map):
 	
 	for x in range(x_min, x_max):
@@ -416,12 +329,15 @@ def hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map):
 				return False
 	return True
 
+# Return true if a partition has the minimum size specified
 def hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h=4, minimum_w=16, minimum_d=16):
 
 	if y_max-y_min < minimum_h or x_max-x_min < minimum_w or z_max-z_min < minimum_d:
 		return False
 	return True
 
+# Return true if a given partition has an acceptable steepness
+# according to the a scoring function and a threshold
 def hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, scoring_function, threshold = 5):
 	initial_value = height_map[x_min][z_min]
 	score = scoring_function(height_map, x_min, x_max, z_min , z_max , initial_value)
@@ -437,7 +353,7 @@ def getHeightMap(level, box):
 	
 	for d, z in zip(range(box.minz,box.maxz), range(0, box.maxz-box.minz)):
 		for w, x in zip(range(box.minx,box.maxx), range(0, box.maxx-box.minx)):
-			terrain[x][z] = findTerrainNew(level, w, d, box.miny, box.maxy)
+			terrain[x][z] = findTerrain(level, w, d, box.miny, box.maxy)
 
 	#print("Terrain Map: ")
 	#for x in range(0, box.maxx-box.minx):
@@ -456,13 +372,6 @@ def getPathMap(height_map, width, depth):
 	threshold = 50
 	for x in range(width):
 		for z in range(depth):
-
-			#if height_map[x][z] == -1:
-			#	pathMap[x][z].left = -1
-			#	pathMap[x][z].right = -1
-			#	pathMap[x][z].down = -1
-			#	pathMap[x][z].up = -1
-			#	continue
 
 			#left
 			if x-1 < 0:
@@ -504,50 +413,6 @@ def getPathMap(height_map, width, depth):
 	#		logging.info("[{}],[{}]: {}".format(x, z, pathMap[x][z]))
 
 	return pathMap
-
-
-def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
-	# sample testing
-	#print("Testing if valid area starting in ", random_x, random_z)
-	#print("limits of matrix: ", minx, maxx, minz, maxz)
-
-	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[random_x][random_z] == -1:
-		return False
-
-	initial_value = terrain[random_x][random_z]
-
-	for x in range(random_x, random_x + mininum_w):
-		for z in range(random_z, random_z + mininum_d):
-			#print("Checking x, z: ", x, z)
-			if terrain[x][z] != initial_value:
-				return False
-
-	return True
-
-
-def getFloodFill(matrix, x_min, x_max, z_min, z_max, random_x, random_z, floodSize):
-
-	initial_value = matrix[random_x][random_z]
-
-	flood_minx = flood_maxx = random_x
-	flood_minz = flood_maxz = random_z
-	
-	for i in range(floodSize+1):
-
-		if random_x - i >= x_min:
-			flood_minx = random_x - i
-
-		if random_x + i <= x_max:
-			flood_maxx = random_x + i
-
-		if random_z - i >= z_min:
-			flood_minz = random_z - i
-
-		if random_z + i <= z_max:
-			flood_maxz = random_z + i
-
-	return (flood_minx, flood_maxx, flood_minz, flood_maxz)
-
 
 
 def getScoreArea_type1(height_map, min_x, max_x, min_z, max_z, initial_value):
@@ -592,19 +457,15 @@ def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
 def getMostOcurredGroundBlock(matrix, height_map, min_x, max_x, min_z, max_z):
 	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
 	block_values = {}
-	print("--SEARCHING MOST OCCURRED!")
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
 			groundBlock = matrix.getValue(height_map[x][z], x, z)
 			if type(groundBlock) == tuple:
 				groundBlock = groundBlock[0]
-			print("GROUND BLOCK: ", groundBlock)
-			print("BLOCK VALUES KEYS: ", block_values.keys())
 			if groundBlock not in block_values.keys():
 				block_values[groundBlock] = 1
 			else:
 				block_values[groundBlock] += 1
-	print("--FINISHED SEARCH!")
 	for key in sorted(block_values, key=block_values.get):
 		if key not in air_like:
 			return (key, 0)
@@ -651,7 +512,7 @@ def updateWorld(level, box, matrix, height, width, depth):
 						setBlock(level, (block[0], block[1]), x, y, z)
 					except:
 						block = matrix.getValue(h,w,d)
-						setBlock(level, (block[0], 0), x, y, z)
+						setBlock(level, (block, 0), x, y, z)
 
 def getCentralPoint(x_min, x_max, z_min, z_max):
 	x_mid = x_max - int((x_max - x_min)/2)
@@ -659,22 +520,20 @@ def getCentralPoint(x_min, x_max, z_min, z_max):
 	return (x_mid, z_mid)
 
 def pavementConnection_old(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
-	print("Connecting ", (x_p1, z_p1), (x_p2, z_p2))
+	logging.info("Connecting {} and {}", (x_p1, z_p1), (x_p2, z_p2))
 	for x in twoway_range(x_p1, x_p2):
 		#h = height_map[x][z_p1]
 		h = 100
-		matrix[h][x][z_p1] = pavementBlock
-		
+		matrix.setValue(h,x,z_p1,pavementBlock)
 		
 
 	for z in twoway_range(z_p1, z_p2):
 		#h = height_map[x_p2][z]
 		h = 100
-		matrix[h][x_p2][z] = pavementBlock
-		matrix[h+1][x_p2][z] = (0,0)
+		matrix.setValue(h,x_p2,z, pavementBlock)
+		matrix.setValue(h+1,x_p2,z, (0,0))
 
-def pavementConnection(level, matrix, path, build1, build2, height_map, pavementBlock = (4,0), baseBlock=(2,0)):
-	logging.info("Connecting road between {} and {}".format(build1.entranceLot, build2.entranceLot))
+def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBlock=(2,0)):
 	block = previous_block = path[0]
 	x = block[0]
 	z = block[1]
@@ -687,9 +546,9 @@ def pavementConnection(level, matrix, path, build1, build2, height_map, pavement
 		z = block[1]
 		#h = 100
 		h = height_map[x][z]
-		matrix[h][x][z] = pavementBlock
+		matrix.setValue(h,x,z,pavementBlock)
 		for j in range(1, 5):
-			matrix[h+j][x][z] = (0,0)
+			matrix.setValue(h+j,x,z, (0,0))
 
 		next_block = path[i+1]
 		# check if we are moving in the x axis (so to add a new pavement
@@ -697,88 +556,25 @@ def pavementConnection(level, matrix, path, build1, build2, height_map, pavement
 		if x != next_block[0]:
 			# if that side block is walkable
 			if z-1 >= 0 and height_map[x][z-1] != -1: 
-				matrix[h][x][z-1] = pavementBlock
+				matrix.setValue(h,x,z-1,pavementBlock)
 				for j in range(1,5):
-					matrix[h+j][x][z-1] = (0,0)
-			if z+1 < len(matrix[h][x]) and height_map[x][z+1] != -1:
-				matrix[h][x][z+1] = pavementBlock
+					matrix.setValue(h+j,x,z-1, (0,0))
+			if z+1 < matrix.depth and height_map[x][z+1] != -1:
+				matrix.setValue(h,x,z+1,pavementBlock)
 				for j in range(1,5):
-					matrix[h+j][x][z+1] = (0,0)
+					matrix.setValue(h+j,x,z+1, (0,0))
 
 		elif z != next_block[1]:
 			# check if we are moving in the z axis (so add a new pavement
 			# on the x-1 block) and if that side block is walkable
 			if x-1 >= 0 and height_map[x-1][z] != -1:
-				matrix[h][x-1][z] = pavementBlock
+				matrix.setValue(h,x-1,z,pavementBlock)
 				for j in range(1,5):
-					matrix[h+j][x-1][z] = (0,0)
-			if x+1 < len(matrix[h]) and height_map[x+1][z] != -1:
-				matrix[h][x+1][z] = pavementBlock
+					matrix.setValue(h+j,x-1,z, (0,0))
+			if x+1 < matrix.width and height_map[x+1][z] != -1:
+				matrix.setValue(h,x+1,z,pavementBlock)
 				for j in range(1,5):
-					matrix[h+j][x+1][z] = (0,0)
-
-def getMST(buildings, pathMap, height_map):
-	MST = []
-	vertices = []
-	partitions = copy.deepcopy(buildings)
-
-	distance_dict = {}
-	#print("All partitions")
-	for p in partitions:
-		distance_dict[p.entranceLot] = {}
-	#	print p.entranceLot
-
-	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
-	#print("Selected: " , selected_vertex)
-	vertices.append(selected_vertex)
-	partitions.remove(selected_vertex)
-
-	while len(partitions) > 0:
-	
-		#print("PARTITIONS: ")
-		#print(partitions)
-
-		edges = []
-		for v in vertices:
-			for p in partitions:
-				#p1 = getCentralPoint(v[2],v[3],v[4],v[5])
-				#p2 = getCentralPoint(p[2],p[3],p[4],p[5])
-				p1 = v.entranceLot
-				p2 = p.entranceLot
-
-				if p2 in distance_dict[p1].keys():
-					distance = distance_dict[p1][p2]
-				elif p1 in distance_dict[p2].keys():
-					distance = distance_dict[p2][p1]
-				else: 
-
-					#distance = getManhattanDistance((p1[1],p1[2]), (p2[1],p2[2]))
-					distance = aStar(p1, p2, pathMap, height_map)
-					distance_dict[p1][p2] = distance
-					distance_dict[p2][p1] = distance
-				if distance != None:
-					edges.append((len(distance), distance, v, p))
-				#if distance != None:
-				#	edges.append((distance, distance, v, p))
-				else:
-					edges.append((-1, None, v, p))
-					#print("NO PATHS BETWEEN ", p1, p2)
-
-		edges = sorted(edges)
-		#print("Edges: ")
-		for e in edges:
-			print(e[0], e[2].entranceLot, e[3].entranceLot)
-
-		if len(edges) > 0:
-			MST.append((edges[0][0], edges[0][1], edges[0][2], edges[0][3]))
-		partitions.remove(edges[0][3])
-		vertices.append(edges[0][3])
-		#print("partitions left: ", len(partitions))
-		#print("MST: ")
-		#for m in MST:
-		#	print(m)
-
-	return MST
+					matrix.setValue(h+j,x+1,z, (0,0))
 
 def getMST_Manhattan(buildings, pathMap, height_map):
 	MST = []
@@ -786,6 +582,7 @@ def getMST_Manhattan(buildings, pathMap, height_map):
 	partitions = copy.deepcopy(buildings)
 
 	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
+	logging.info("Initial selected partition: {}".format(selected_vertex))
 	vertices.append(selected_vertex)
 	partitions.remove(selected_vertex)
 
@@ -793,7 +590,9 @@ def getMST_Manhattan(buildings, pathMap, height_map):
 	
 		edges = []
 		for v in vertices:
-			for p in partitions:				
+			logging.info("v: {}".format(v))
+			for p in partitions:
+				logging.info("\tp: {}".format(p))				
 				p1 = v.entranceLot
 				p2 = p.entranceLot
 				distance = getManhattanDistance((p1[1],p1[2]), (p2[1],p2[2]))	
@@ -817,46 +616,17 @@ def printMatrix(matrix, height, width, depth):
 def twoway_range(start, stop):
 	return range(start, stop+1, 1) if (start <= stop) else range(start, stop-1, -1)
 
-def convertHeightCoordinates(box,max_h, height):
-	for y, h in zip(range(box.miny,box.maxy), range(0,max_h)):
-		if y == height:
-			#print("Converted Box height ", height, " to ", h)
-			return h
-	#print("FAILED TO CONVERT BOX HEIGHT ", height)
-
-def convertWidthCoordinates(box,max_x, width):
-	for x, w in zip(range(box.minx,box.maxx), range(0,max_x)):
-		if x == width:
-			#print("Converted Box width ", width, " to ", w)
-			return w
-	#print("FAILED TO CONVERT BOX WIDTH ", width)
-
-def convertDepthCoordinates(box,max_z, depth):
-	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
-		if z == depth:
-			#print("Converted Box depth ", depth, " to ", d)
-			return d
-	#print("FAILED TO CONVERT BOX DEPTH ", depth)
-
-def convertHeightMatrixToBox(box, max_y, height):
-	for y, h in zip(range(box.miny,box.maxy), range(0,max_y)):
-		if h == height:
-			return y
-
-def convertWidthMatrixToBox(box, max_x, width):
-	for x, w in zip(range(box.minx,box.maxx), range(0,max_x)):
-		if w == width:
-			return x
-
-def convertDepthMatrixToBox(box, max_z, depth):
-	for z, d in zip(range(box.minz,box.maxz), range(0,max_z)):
-		if d == depth:
-			return z
-
 def updateHeightMap(height_map, x_min, x_max, z_min, z_max, height):
 	for x in range(x_min, x_max+1):
 		for z in range(z_min, z_max+1):
 			height_map[x][z] = height
+
+def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+	for h in range(h_min, h_max):
+		for x in range(x_min, x_max+1):
+			for z in range(z_min, z_max+1):
+				matrix.setValue(h,x,z, (0,0))
+
 
 def saveFiles(height_map, pathMap, all_buildings, file_name1, file_name2, file_name3):
 	with open(file_name1, 'wb') as matrix_file:
@@ -867,3 +637,69 @@ def saveFiles(height_map, pathMap, all_buildings, file_name1, file_name2, file_n
 
 	with open(file_name3, 'wb') as matrix_file:
 		pickle.dump(all_buildings, matrix_file)
+
+
+
+
+
+# algorithm to randomly find flat areas given a height map
+def getAreasSameHeight(box,terrain):
+	validAreas = []
+
+	for i in range(0, 1000):
+		random_x = RNG.randint(0, box.maxx-box.minx)
+		random_z = RNG.randint(0,box.maxz-box.minz)
+		size_x = 15
+		size_z = 15
+		if checkSameHeight(terrain, 0, box.maxx-box.minx, 0,box.maxz-box.minz, random_x, random_z, size_x, size_z):
+			newValidArea = (random_x, random_x+size_x-1, random_z, random_z+size_z-1)
+			if newValidArea not in validAreas:
+				validAreas.append(newValidArea)
+
+	print("Valid areas found:")
+	validAreas = removeOverlaping(validAreas)
+	for a in validAreas:
+		print(a)
+
+	return validAreas
+
+def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
+	# sample testing
+	#print("Testing if valid area starting in ", random_x, random_z)
+	#print("limits of matrix: ", minx, maxx, minz, maxz)
+
+	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[random_x][random_z] == -1:
+		return False
+
+	initial_value = terrain[random_x][random_z]
+
+	for x in range(random_x, random_x + mininum_w):
+		for z in range(random_z, random_z + mininum_d):
+			#print("Checking x, z: ", x, z)
+			if terrain[x][z] != initial_value:
+				return False
+
+	return True
+
+def getFloodFill(matrix, x_min, x_max, z_min, z_max, random_x, random_z, floodSize):
+
+	initial_value = matrix[random_x][random_z]
+
+	flood_minx = flood_maxx = random_x
+	flood_minz = flood_maxz = random_z
+	
+	for i in range(floodSize+1):
+
+		if random_x - i >= x_min:
+			flood_minx = random_x - i
+
+		if random_x + i <= x_max:
+			flood_maxx = random_x + i
+
+		if random_z - i >= z_min:
+			flood_minz = random_z - i
+
+		if random_z + i <= z_max:
+			flood_maxz = random_z + i
+
+	return (flood_minx, flood_maxx, flood_minz, flood_maxz)

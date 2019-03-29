@@ -6,14 +6,14 @@ import math
 import RNG
 import logging
 
-def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, options, ceiling = None):
+def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = None):
 
 	house = utilityFunctions.dotdict()
 	house.type = "house"
 	#house.area = (h_min, h_max, x_min, x_max, z_min, z_max)
 	house.area = utilityFunctions.dotdict({"y_min": h_min, "y_max": h_max, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
 
-	cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
+	utilityFunctions.cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 	generateFence(matrix, h_min, x_min, x_max, z_min, z_max)
 
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
@@ -115,12 +115,12 @@ def getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 
 	return (h_min, h_max, x_min, x_max, z_min, z_max)
 	
-def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
-	for h in range(h_min, h_max):
-		for x in range(x_min, x_max+1):
-			for z in range(z_min, z_max+1):
-				#matrix[h][x][z] = (0,0)
-				matrix.setValue(h,x,z, (0,0))
+# def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
+# 	for h in range(h_min, h_max):
+# 		for x in range(x_min, x_max+1):
+# 			for z in range(z_min, z_max+1):
+# 				#matrix[h][x][z] = (0,0)
+# 				matrix.setValue(h,x,z, (0,0))
 
 def generateFloor(matrix, h, x_min, x_max, z_min, z_max, floor):
 	for x in range(x_min, x_max+1):

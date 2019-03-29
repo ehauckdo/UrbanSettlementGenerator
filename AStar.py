@@ -71,29 +71,28 @@ def aStar(p1, p2, pathMap, height_map):
 
 			# Get node position
 			node_position = (current_node.position[0] + new_position[0], current_node.position[1] + new_position[1])
-			#print("Testing new position ", node_position)
+			#logging.info("Testing new position {}".format(node_position))
 
 			# Make sure within range
 			if node_position[0] > (len(pathMap) - 1) or node_position[0] < 0 or node_position[1] > (len(pathMap[len(pathMap)-1]) -1) or node_position[1] < 0:
 				continue
 
-			#print("Passed range test!")
+			#logging.info("Passed range test!")
 			# Make sure walkable terrain
 
 			# Create new node
 			new_node = Node(current_node, node_position)
 
 			direction = getDirectionFromParent(current_node, new_node)
-			#print("direction from parent ", current_node.position, " = ", direction)
+			#logging.info("direction from parent {} = {}".format(current_node.position, direction))
 			#print("height_map parent: ", height_map[current_node.position[0]][current_node.position[1]])
 			#print("height_map parent: ", height_map[new_node.position[0]][new_node.position[1]])
 
 			if pathMap[current_node.position[0]][current_node.position[1]][direction] == -1 and node_position != end_node.position:
-				#print("Failed pathMap test!")
+				#logging.info("Failed pathMap test!")
 				continue
 
 			#print("Passed pathMap test!")
-			
 			
 			# Append
 			children.append(new_node)
@@ -112,7 +111,7 @@ def aStar(p1, p2, pathMap, height_map):
 			skip = False
 			for closed_child in closed_list:
 				if child == closed_child:
-					#skip = True
+					skip = True
 					#print("Child in closed list, skipping")
 					continue
 			if skip == True: continue
