@@ -1,6 +1,7 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
 import random
+from ObjectGenerator import *
 import math
 import RNG
 import logging
@@ -169,6 +170,9 @@ def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_ma
 	cur_floor = h_min
 	cur_floor_ceiling = cur_floor+floor_size
 	floor = 0
+	x_mid = x_max - int((x_max - x_min)/2)
+	z_mid = z_max - int((z_max - z_min)/2)
+	
 	while cur_floor < h_max:
 
 		# bed
@@ -176,37 +180,21 @@ def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_ma
 		#matrix.setValue(h_min+1, x_max-2, z_min+1, (26,3)
 
 		# bed (wool)
-		matrix.setValue(cur_floor+1, x_max-1, z_min+1, (35,14))
-		matrix.setValue(cur_floor+1, x_max-2, z_min+1, (35,14))
-
-		x_mid = x_max - int((x_max - x_min)/2)
-		z_mid = z_max - int((z_max - z_min)/2)
+		generateBed(matrix, cur_floor, x_max, z_min)
 
 		# table
-		matrix.setValue(cur_floor+1, x_mid, z_mid, (85,0))
-		matrix.setValue(cur_floor+2, x_mid, z_mid, (72,0))
-		matrix.setValue(cur_floor+1, x_mid-1, z_mid, (53, 1))
-		matrix.setValue(cur_floor+1, x_mid+1, z_mid, (53, 0))
+		generateCentralTable(matrix, cur_floor, x_mid, z_mid)
 
 		# bookshelf
-		matrix.setValue(cur_floor+1, x_max-1, z_max-1, (47,0))
-		matrix.setValue(cur_floor+1, x_max-2, z_max-1, (47,0))
-		matrix.setValue(cur_floor+2, x_max-1, z_max-1, (47,0))
-		matrix.setValue(cur_floor+2, x_max-2, z_max-1, (47,0))
+		generateBookshelf(matrix, cur_floor, x_max, z_max)
 
 		# couch
-		matrix.setValue(cur_floor+1, x_min+4, z_max-1, (68, 5))
-		matrix.setValue(cur_floor+1, x_min+3, z_max-1, (53, 2))
-		matrix.setValue(cur_floor+1, x_min+2, z_max-1, (53, 2))
-		matrix.setValue(cur_floor+1, x_min+1, z_max-1, (68, 4))
+		generateCouch(matrix, cur_floor, x_min, z_max)
 
 		# chandelier
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
-		matrix.setValue(cur_floor_ceiling-1, x_mid, z_mid, (85,0))
-		matrix.setValue(cur_floor_ceiling-2, x_mid, z_mid, (85,0))
-		matrix.setValue(cur_floor_ceiling-3, x_mid, z_mid, (169,0))
-		matrix.setValue(cur_floor_ceiling-3, x_mid, z_mid, (169,0))
+		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid)
 
 		cur_floor += floor_size
 

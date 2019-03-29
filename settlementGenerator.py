@@ -7,8 +7,9 @@ import pickle
 import RNG
 import logging
 from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
-from HouseGenerator import generateHouse
-from MultistoreyBuildingGenerator import generateBuilding, generateHospital
+import HouseGenerator 
+import MultistoreyBuildingGenerator
+from Earthworks import prepareLot
 
 logging.basicConfig(filename="log", level=logging.INFO, filemode='w')
 #logging.getLogger().addHandler(logging.StreamHandler())
@@ -149,7 +150,7 @@ def perform(level, box, options, height_map=None):
 		logging.info("\t{}".format(p))
 
 	for partition in partitioning:
-		building = fillBuilding(world, partition, height_map)
+		building = generateBuilding(world, partition, height_map)
 		all_buildings.append(building)
 
 	# # ==== GENERATING NEIGHBOURHOODS ==== 
@@ -215,7 +216,7 @@ def perform(level, box, options, height_map=None):
 			logging.info("\t{}".format(p))
 
 		for partition in partitioning:
-			house = fillHouse(world, partition, height_map)
+			house = generateHouse(world, partition, height_map)
 			all_buildings.append(house)
 
 
@@ -281,7 +282,7 @@ def perform(level, box, options, height_map=None):
 	# 	logging.info("\t{}".format(p))
 
 	# for partition in partitioning:
-	# 	house = fillHouse(world, partition, height_map)
+	# 	house = generateHouse(world, partition, height_map)
 	# 	all_buildings.append(house)
 
 	############# END TESTING SECTION ###############
@@ -293,125 +294,37 @@ def perform(level, box, options, height_map=None):
 	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings, "TestMap2HeightMap", "TestMap2PathMap", "TestMap2AllBuildings")
 
 	# ==== CONNECTING BUILDINGS WITH ROADS  ==== 
-	logging.info("Calling MST on {} buildings".format(len(all_buildings)))
-	MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
-	logging.info("MST result: ")
-	for m in MST:
-		logging.info(m)
+	# logging.info("Calling MST on {} buildings".format(len(all_buildings)))
+	# MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
+	# logging.info("MST result: ")
+	# for m in MST:
+	# 	logging.info(m)
 	
-	pavementBlockID = 4 #171
-	pavementBlockSubtype = 0
-	for m in MST:
-		p1 = m[1]
-		p2 = m[2]
-		logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
-		#path = m[1]
+	# pavementBlockID = 4 #171
+	# pavementBlockSubtype = 0
+	# for m in MST:
+	# 	p1 = m[1]
+	# 	p2 = m[2]
+	# 	logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
+	# 	#path = m[1]
 
-		p1_entrancePoint = p1.entranceLot
-		p2_entrancePoint = p2.entranceLot
+	# 	p1_entrancePoint = p1.entranceLot
+	# 	p2_entrancePoint = p2.entranceLot
 
-	 	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
-	 	if path != None:
-	 		logging.info("Found path between {} and {}. Generating road...".format(p1.entranceLot, p2.entranceLot))
-		 	utilityFunctions.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
-		else:
-			logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
-	 		utilityFunctions.pavementConnection_old(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
+	#  	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
+	#  	if path != None:
+	#  		logging.info("Found path between {} and {}. Generating road...".format(p1.entranceLot, p2.entranceLot))
+	# 	 	utilityFunctions.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
+	# 	else:
+	# 		logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
+	#  		utilityFunctions.pavementConnection_old(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
 	 	
-		#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
+	# 	#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
-	utilityFunctions.updateWorld(level, box, world, height, width, depth)
+	#utilityFunctions.updateWorld(level, box, world, height, width, depth)
+	world.updateWorld()
 	
-
-# ==========================================================================
-#				# LOT PREPARING FUNCTIONS
-# ==========================================================================
-
-# Perform earthworks on a given lot, returns the height to start construction
-def prepareLot(matrix, p, height_map):
-
-	areaScore = utilityFunctions.getScoreArea_type1(height_map, p[2],p[3], p[4], p[5], height_map[p[2]][p[4]])
-	logging.info("Preparing lot {} with score {}".format(p, areaScore))
-
-	if areaScore != 0:
-		terrain_height = flattenPartition(matrix, p[2],p[3], p[4], p[5], height_map)
-		logging.info("Terrain was flattened at height {}".format(terrain_height))
-		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
-		h = matrix.getMatrixY(terrain_height)
-	else:
-		heightCounts = utilityFunctions.getHeightCounts(height_map, p[2],p[3], p[4], p[5])
-		terrain_height = max(heightCounts, key=heightCounts.get)
-		logging.info("No changes in terrain were necessary, terrain at height {}".format(terrain_height))
-		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
-		h = matrix.getMatrixY(terrain_height)
-
-	logging.info("Index of height {} in selection box matrix: {}".format(terrain_height, h))
-
-	return h
-
-# Given the map matrix, a partition (x_min, x_max, z_min, z_max) and a
-# height_map, perform earthworks on this lot by the flattening
-# returns the height in which construction should start
-def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
-
-	heightCounts = utilityFunctions.getHeightCounts(height_map, x_min, x_max, z_min, z_max)
-	most_ocurred_height = max(heightCounts, key=heightCounts.get)
-
-	logging.info("Flattening {}".format((x_min, x_max, z_min, z_max)))
-	#print("Height Counts: ", heightCounts)
-	#print("Most ocurred height: ", most_ocurred_height)
-
-	#box_xmin = utilityFunctions.convertWidthMatrixToBox(box, width, x_min)
-	#box_zmin = utilityFunctions.convertDepthMatrixToBox(box, depth, z_min)
-
-	#base_block = level.blockAt(box_xmin, height_map[x_min][z_min], box_zmin)
-	#print("Base Block at coords ", x_min, x_max, ": ", base_block)
-	base_block = utilityFunctions.getMostOcurredGroundBlock(matrix, height_map, x_min, x_max, z_min, z_max)
-	logging.info("Most occurred ground block: {}".format(base_block))
-	logging.info("Flattening at height {}".format(most_ocurred_height))
-
-	for x in range(x_min, x_max):
-		for z in range(z_min,z_max):
-			if height_map[x][z] == most_ocurred_height:
-				# Equal height! No flattening needed
-				# but lets use the base block just in case
-				matrix.setValue(height_map[x][z], x, z, base_block)
-			if height_map[x][z] != most_ocurred_height:
-				#print(x, z, " Different Height!")
-
-				if height_map[x][z] == -1:
-					logging.warning("Flattening invalid area. Position ", x, z, " of height_map is -1. Cannot do earthworks.")
-					continue
-
-				#matrix_height = utilityFunctions.convertHeightCoordinates(box, height, height_map[x][z])
-				#desired_matrix_height = utilityFunctions.convertHeightCoordinates(box, height, most_ocurred_height)
-				matrix_height = matrix.getMatrixY(height_map[x][z])
-				desired_matrix_height = matrix.getMatrixY(most_ocurred_height)
-				#print("height_map[x][z] = ", height_map[x][z], ", matrix_height = ", matrix_height)
-				#print("most_ocurred_height = ", most_ocurred_height, ", desired_matrix_height = ", desired_matrix_height)
-
-				if desired_matrix_height > matrix_height:
-					for y in range(matrix_height, desired_matrix_height+1):
-						matrix.setValue(y,x,z, base_block)
-				else:
-					#update every block between top height and the desired height
-					# when bringing the ground to a lower level, this will have the 
-					# effect of e.g. erasing trees that were on top of that block
-					# this may cause some things to be unproperly erased
-					# (e.g. a branch of a tree coming from an nearby block)
-					# but this is probably the best/less complex solution for this
-					for y in range(matrix.height-1, desired_matrix_height, -1):
-						matrix.setValue(y,x,z, 0)
-					matrix.setValue(desired_matrix_height,x,z, base_block)
-
-	return most_ocurred_height
-
-# ==========================================================================
-#				# PARTITIONING FUNCTIONS
-# ==========================================================================
 
 def generateNeighbourhoodPartitioning(space, height_map):
 	neighbourhoods = []
@@ -424,18 +337,16 @@ def generateNeighbourhoodPartitioning(space, height_map):
 		logging.info("Generated neighbourhood: {}".format(p))
 	return (center, neighbourhoods)
 
-def fillBuilding(matrix, p, height_map):
+def generateBuilding(matrix, p, height_map):
 
-	#print(p[0],p[1],p[2],p[3], p[4], p[5])	
-	#if RNG.random() > 0.5:
 	h = prepareLot(matrix, p, height_map)
-	building = generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5])
+	building = MultistoreyBuildingGenerator.generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5])
 	constructionArea = building.constructionArea
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
 	#utilityFunctions.updateHeightMap(height_map, constructionArea[2], constructionArea[3], constructionArea[4], constructionArea[5], -1)
 	return building
 
-def fillHouse(matrix, p, height_map):
+def generateHouse(matrix, p, height_map):
 	logging.info("Generating a house in lot {}".format(p))
 	logging.info("Terrain before flattening: ")
 	for x in range (p[2], p[3]):
@@ -443,9 +354,7 @@ def fillHouse(matrix, p, height_map):
 		for z in range(p[4], p[5]):
 			line += str(height_map[x][z])+" "
 		logging.info(line)
-			
-	#print(p[0],p[1],p[2],p[3], p[4], p[5])
-	#if RNG.random() > 0.5:	
+				
 	h = prepareLot(matrix, p, height_map)
 
 	logging.info("Terrain after flattening: ")
@@ -456,10 +365,8 @@ def fillHouse(matrix, p, height_map):
 		logging.info(line)
 
 
-	house = generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5])
-	#houses.append(generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5], options))
-	#constructionArea = house.constructionArea
-	#utilityFunctions.updateHeightMap(height_map, constructionArea[2], constructionArea[3], constructionArea[4], constructionArea[5], -1)
+	house = HouseGenerator.generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5])
+	
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
 
 	logging.info("Terrain after construction: ")

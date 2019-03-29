@@ -1,6 +1,7 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
 from GenerateCarpet import generateCarpet
+from ObjectGenerator import *
 import random
 import math
 import RNG
@@ -145,40 +146,29 @@ def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max, wood):
 	#matrix[h_min+1][x_max-1][z_min+1] = (26,11)
 	#matrix[h_min+1][x_max-2][z_min+1] = (26,3)
 
-	#generateCarpet(matrix.matrix, h_min+1, x_min+1, x_max, z_min+1, z_max)
+	generateCarpet(matrix.matrix, h_min+1, x_min+1, x_max, z_min+1, z_max)
 
 	# bed (wool)
-	matrix.setValue(h_min+1, x_max-1, z_min+1, (35,14))
-	matrix.setValue(h_min+1, x_max-2, z_min+1, (35,14))
+	generateBed(matrix, h_min, x_max, z_min)
 
 	x_mid = x_max - int((x_max - x_min)/2)
 	z_mid = z_max - int((z_max - z_min)/2)
 
 	# table
-	matrix.setValue(h_min+1, x_mid, z_mid, (85,0))
-	matrix.setValue(h_min+2, x_mid, z_mid, (72,0))
-	matrix.setValue(h_min+1, x_mid-1, z_mid, (53, 1))
-	matrix.setValue(h_min+1, x_mid+1, z_mid, (53, 0))
+	generateCentralTable(matrix, h_min, x_mid, z_mid)
 
 	# bookshelf
-	matrix.setValue(h_min+1, x_max-1, z_max-1, (47,0))
-	matrix.setValue(h_min+1, x_max-2, z_max-1, (47,0))
-	matrix.setValue(h_min+2, x_max-1, z_max-1, (47,0))
-	matrix.setValue(h_min+2, x_max-2, z_max-1, (47,0))
+	generateBookshelf(matrix, h_min, x_max, z_max)
 
 	# couch
-	matrix.setValue(h_min+1, x_min+4, z_max-1, (68, 5))
-	matrix.setValue(h_min+1, x_min+3, z_max-1, (53, 2))
-	matrix.setValue(h_min+1, x_min+2, z_max-1, (53, 2))
-	matrix.setValue(h_min+1, x_min+1, z_max-1, (68, 4))
+	generateCouch(matrix, h_min, x_min, z_max)
 
 	# chandelier
 	x_mid = x_min + (x_max-x_min)/2
 	z_mid = z_min + (z_max-z_min)/2
 	for z in range(z_min+1, z_max):
 		matrix.setValue(h_max, x_mid, z, wood)
-	matrix.setValue(h_max-1, x_mid, z_mid, (85,0))
-	matrix.setValue(h_max-2, x_mid, z_mid, (169,0))
+	generateChandelier(matrix, h_max, x_mid, z_mid)
 
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
