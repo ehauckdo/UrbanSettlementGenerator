@@ -379,7 +379,6 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 				# Equal height! No flattening needed
 				# but lets use the base block just in case
 				matrix.setValue(height_map[x][z], x, z, base_block)
-				#matrix[height_map[x][z]][x][z] = base_block
 			if height_map[x][z] != most_ocurred_height:
 				#print(x, z, " Different Height!")
 
@@ -397,7 +396,6 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 				if desired_matrix_height > matrix_height:
 					for y in range(matrix_height, desired_matrix_height+1):
 						matrix.setValue(y,x,z, base_block)
-						#matrix[y][x][z] = base_block
 				else:
 					#update every block between top height and the desired height
 					# when bringing the ground to a lower level, this will have the 
@@ -407,9 +405,7 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 					# but this is probably the best/less complex solution for this
 					for y in range(matrix.height-1, desired_matrix_height, -1):
 						matrix.setValue(y,x,z, 0)
-						#matrix[y][x][z] = 0
 					matrix.setValue(desired_matrix_height,x,z, base_block)
-					#matrix[desired_matrix_height][x][z] = base_block
 
 	return most_ocurred_height
 

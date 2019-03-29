@@ -45,14 +45,6 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 
 	utilityFunctions.cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 
-	# x_min += 3
-	# x_max -= 3
-	# z_min += 3
-	# z_max -= 3
-
-	# if h_max-h_min < 20 or x_max-x_min < 8 or z_max-z_min < 8:
-	# 	return matrix
-
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
 	building.constructionArea = (h_min, h_max, x_min, x_max, z_min, z_max)
 
@@ -124,19 +116,13 @@ def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max,
 			x = x_max-2
 			z = z_max-2
 			for x1 in range(x, x-3, -1):
-				#matrix[step+1][x1][z] = (0, 0)
-				#matrix[step+1][x1][z-1] = (0, 0)
 				matrix.setValue(step+1, x1, z, (0, 0))
 				matrix.setValue(step+1, x1, z-1, (0, 0))
 
 			while step > cur_floor:
-				#matrix[step][x][z] = (109, 0)
-				#matrix[step][x][z-1] = (109, 0)
 				matrix.setValue(step, x, z, (109, 0))
 				matrix.setValue(step, x, z-1, (109, 0))
 				for h in range(cur_floor+1, step):
-					#matrix[h][x][z] = (98, 0)
-					#matrix[h][x][z-1] = (98, 0)
 					matrix.setValue(h, x, z, (98, 0))
 					matrix.setValue(h, x, z-1, (98, 0))
 				
@@ -146,18 +132,12 @@ def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max,
 			x = x_min+2
 			z = z_max-2
 			for x1 in range(x, x+3):
-				#matrix[step+1][x1][z] = (0, 0)
-				#matrix[step+1][x1][z-1] = (0, 0)
 				matrix.setValue(step+1, x1, z, (0, 0))
 				matrix.setValue(step+1, x1, z-1, (0, 0))
 			while step > cur_floor:
-				#matrix[step][x][z] = (109, 1)
-				#matrix[step][x][z-1] = (109, 1)
 				matrix.setValue(step, x, z, (109, 1))
 				matrix.setValue(step, x, z-1, (109, 1))
 				for h in range(cur_floor+1, step):
-					#matrix[h][x][z] = (98, 0)
-					#matrix[h][x][z-1] = (98, 0)
 					matrix.setValue(h, x, z, (98, 0))
 					matrix.setValue(h, x, z-1, (98, 0))
 				step -= 1
@@ -175,12 +155,9 @@ def generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_m
 		# generating separating wall between hall and apartments
 		for h in range(cur_floor, cur_floor+floor_size):
 			for x in range(x_min, x_max):
-				#matrix[h][x][z_max-6] = wall
 				matrix.setValue(h, x, z_max-6, wall)
 
 		door_x = x_max - ((x_max-x_min)/2)
-		#matrix[cur_floor+2][door_x][z_max-6] = (64,8)
-		#matrix[cur_floor+1][door_x][z_max-6] = (64,3)
 		matrix.setValue(cur_floor+2, door_x, z_max-6, (64,8))
 		matrix.setValue(cur_floor+1, door_x, z_max-6, (64,8))
 
@@ -238,16 +215,12 @@ def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min,
 	# walls along x axis
 	for x in range(x_min, x_max+1):
 		for y in range(h_min, h_max):
-			#matrix[y][x][z_max] = wall
-			#matrix[y][x][z_min] = wall
 			matrix.setValue(y,x,z_max, wall)
 			matrix.setValue(y,x,z_min, wall)
 
 	# walls along z axis
 	for z in range(z_min, z_max+1):
 		for y in range(h_min, h_max):
-			#matrix[y][x_max][z] = wall
-			#matrix[y][x_min][z] = wall
 			matrix.setValue(y,x_max,z, wall)
 			matrix.setValue(y,x_min,z, wall)
 
@@ -256,7 +229,6 @@ def generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min,
 	while cur_floor <= h_max:
 		for x in range(x_min, x_max+1):
 			for z in range(z_min, z_max+1):
-				#matrix[cur_floor][x][z] = wall
 				matrix.setValue(cur_floor,x,z, wall)
 
 		cur_floor += floor_size
@@ -275,15 +247,6 @@ def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_mi
 	 	#middle = x_min + int(width/2)
 		#for x in range(middle - int(x_window_size/2), middle + int(math.ceil(x_window_size/2)),4):
 		for x in range(x_min+1, x_max-1, 3):
-			#matrix[window_h][x][z_min] = (20,0)
-			#matrix[window_h][x][z_max] = (20,0)
-			#matrix[window_h-1][x][z_min] = (20,0)
-			#matrix[window_h-1][x][z_max] = (20,0)
-
-			#matrix[window_h][x+1][z_min] = (20,0)
-			#matrix[window_h][x+1][z_max] = (20,0)
-			#matrix[window_h-1][x+1][z_min] = (20,0)
-			#matrix[window_h-1][x+1][z_max] = (20,0)
 
 			matrix.setValue(window_h, x, z_min, (20,0))
 			matrix.setValue(window_h, x, z_max, (20,0))
@@ -299,15 +262,6 @@ def generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_mi
 		#middle = z_min + int(depth/2)
 		#for z in range(middle - int(z_window_size/2), middle + int(math.ceil(z_window_size/2)),4):
 		for z in range(z_min+1, z_max-1, 3):
-			#matrix[window_h][x_min][z] = (20,0)
-		 	#matrix[window_h][x_max][z] = (20,0)
-		 	#matrix[window_h-1][x_min][z] = (20,0)
-		 	#matrix[window_h-1][x_max][z] = (20,0)
-
-		 	#matrix[window_h][x_min][z+1] = (20,0)
-		 	#matrix[window_h][x_max][z+1] = (20,0)
-		 	#matrix[window_h-1][x_min][z+1] = (20,0)
-		 	#matrix[window_h-1][x_max][z+1] = (20,0)
 
 		 	matrix.setValue(window_h, x_min, z, (20,0))
 		 	matrix.setValue(window_h, x_max, z, (20,0))
@@ -334,10 +288,6 @@ def generateBuildingWindows_x(matrix, h_min, h_max, floor_size, x_min, x_max, z_
 		#middle = z_min + int(depth/2)
 		#for z in range(middle - int(z_window_size/2), middle + int(math.ceil(z_window_size/2)),4):
 		for z in range(z_min+1, z_max-1, 3):
-			#matrix[window_h][x_min][z] = (20,0)
-		 	#matrix[window_h-1][x_min][z] = (20,0)
-		 	#matrix[window_h][x_min][z+1] = (20,0)
-		 	#matrix[window_h-1][x_min][z+1] = (20,0)
 
 		 	matrix.setValue(window_h, x_min, z, (20,0))
 		 	matrix.setValue(window_h-1, x_min, z, (20,0))
@@ -357,22 +307,12 @@ def generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_
 		window_h = cur_floor + int(math.ceil(floor_size/2))
 		for x in range(x_min+2, x_max-1, 3):
 			# apartment windows
-			#matrix[window_h][x][z_min] = (20,0)
-			#matrix[window_h-1][x][z_min] = (20,0)
-			#matrix[window_h][x+1][z_min] = (20,0)
-			#matrix[window_h-1][x+1][z_min] = (20,0)
-
 			matrix.setValue(window_h, x, z_min, (20,0))
 			matrix.setValue(window_h-1, x, z_min, (20,0))
 			matrix.setValue(window_h, x+1, z_min, (20,0))
 			matrix.setValue(window_h-1, x+1, z_min, (20,0))
 
 			# corridor windows
-			#matrix[window_h][x][z_max] = (20,0)
-			#matrix[window_h-1][x][z_max] = (20,0)
-			#matrix[window_h][x+1][z_max] = (20,0)
-			#matrix[window_h-1][x+1][z_max] = (20,0)
-
 			matrix.setValue(window_h, x, z_max, (20,0))
 			matrix.setValue(window_h-1, x, z_max, (20,0))
 			matrix.setValue(window_h, x+1, z_max, (20,0))
@@ -416,8 +356,6 @@ def generateDoor_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	#matrix[h_min+1][pos][z_min] = (64,1)
 	#return (h_min, pos, z_min)
 	#else:
-	#matrix[h_min+2][pos][z_max] = (64,8)
-	#matrix[h_min+1][pos][z_max] = (64,3)
 	matrix.setValue(h_min+2, pos, z_max, (64,8))
 	matrix.setValue(h_min+1, pos, z_max, (64,8))
 	return (h_min, pos, z_max)
@@ -433,14 +371,6 @@ def generateDoor_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	#matrix[h_min+1][x_min][pos] = (64,0)
 	#return (h_min, x_min, pos)
 	#else:
-	#matrix[h_min+2][x_max][pos] = (64,9)
-	#matrix[h_min+1][x_max][pos] = (64,2)
 	matrix.setValue(h_min+2, x_max, pos, (64,9))
 	matrix.setValue(h_min+1, x_max, pos, (64,2))
 	return (h_min, x_max, pos)
-
-# def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
-# 	for h in range(h_min, h_max):
-# 		for x in range(x_min, x_max+1):
-# 			for z in range(z_min, z_max+1):
-# 				matrix[h][x][z] = (0,0)

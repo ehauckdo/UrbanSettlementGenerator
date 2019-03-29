@@ -311,13 +311,6 @@ def getManhattanDistance(p1,p2):
 	distance = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 	return distance
 
-def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
-	for h in range(h_min, h_max):
-		for x in range(x_min, x_max+1):
-			for z in range(z_min, z_max+1):
-				matrix[h][x][z] = (0,0)
-
-
 
 # Given a partition and height map, return true if there's no water
 # or other unwalkable block inside that partition
@@ -505,7 +498,6 @@ def updateWorld(level, box, matrix, height, width, depth):
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
 			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-				#if matrix[h][w][d] != None:
 				if matrix.isChanged(h,w,d):
 					try:
 						block = matrix.getValue(h,w,d)
