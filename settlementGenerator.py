@@ -70,9 +70,10 @@ def perform(level, box, options, height_map=None):
 	# ==== PREPARATION =====
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 	logging.info("Selection box dimensions {}, {}, {}".format(width,height,depth))
-	matrix = utilityFunctions.generateMatrix(width,depth,height,options)
+	world = utilityFunctions.generateMatrix(level, box, width,depth,height,options)
 	world_space = utilityFunctions.dotdict({"y_min": 0, "y_max": height-1, "x_min": 0, "x_max": width-1, "z_min": 0, "z_max": depth-1})
 
+	print(world)
 
 	# calculate height map if not passed as param
 	if height_map == None:
@@ -81,7 +82,7 @@ def perform(level, box, options, height_map=None):
 		logging.info("Skipping height map generation")
 	
 	# ==== PARTITIONING OF NEIGHBOURHOODS ==== 
-	#(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
+	#(center, neighbourhoods) = generateNeighbourhoodPartitioning(world, height_map)
 
 	# ====  GENERATING CITY CENTER ==== 
 	all_buildings = []
@@ -220,14 +221,14 @@ def perform(level, box, options, height_map=None):
 	# 		all_buildings.append(house)
 
 
-	minimum_h = 3 
+	minimum_h = 10 
 	minimum_w = 16
 	mininum_d = 16
 
-	number_of_tries = 10
+	number_of_tries = 2
 	minimum_lots = 100
 	available_lots = 0
-	maximum_tries = 100
+	maximum_tries = 10
 	current_try = 0
 	bestPartitioning = []
 
@@ -237,8 +238,8 @@ def perform(level, box, options, height_map=None):
 	while available_lots < minimum_lots and current_try < maximum_tries:
 	
 		for i in range(number_of_tries):
-			partitioning = binarySpacePartitioning(world_space.y_min, world_space.y_max, world_space.x_min, world_space.x_max, world_space.z_min, world_space.z_max, [])
-			#partitioning = quadtreeSpacePartitioning(world_space.y_min, world_space.y_max, world_space.x_min, world_space.x_max, world_space.z_min, world_space.z_max, [])
+			partitioning = binarySpacePartitioning(world.y_min, world.y_max, world.x_min, world.x_max, world.z_min, world.z_max, [])
+			#partitioning = quadtreeSpacePartitioning(world.y_min, world.y_max, world.x_min, world.x_max, world.z_min, world.z_max, [])
 
 			valid_partitioning = []
 			for p in partitioning:
@@ -275,12 +276,12 @@ def perform(level, box, options, height_map=None):
 		partitioning_list = sorted(partitioning_list, reverse=True)
 		partitioning = partitioning_list[0][1]
 
-	logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), world_space))
+	logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), world))
 	for p in partitioning:
 		logging.info("\t{}".format(p))
 
 	for partition in partitioning:
-		house = fillHouse(level, box, matrix, height, width, depth, partition, height_map, options)
+		house = fillHouse(world, height, width, depth, partition, height_map, options)
 		all_buildings.append(house)
  
 	# ==== GENERATE PATH MAP  ==== 
@@ -317,7 +318,7 @@ def perform(level, box, options, height_map=None):
 	# 	#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
-	utilityFunctions.updateWorld(level, box, matrix, height, width, depth)
+	utilityFunctions.updateWorld(level, box, world, height, width, depth)
 	
 
 # ==========================================================================
@@ -325,23 +326,24 @@ def perform(level, box, options, height_map=None):
 # ==========================================================================
 
 # Perform earthworks on a given lot, returns the height to start construction
-def prepareLot(level, box, matrix, height, width, depth, p, height_map):
+def prepareLot(matrix, p, height_map):
 
 	areaScore = utilityFunctions.getScoreArea_type1(height_map, p[2],p[3], p[4], p[5], height_map[p[2]][p[4]])
 	logging.info("Preparing lot {} with score {}".format(p, areaScore))
 
 	if areaScore != 0:
-		terrain_height = flattenPartition(matrix, level, box, height, width, depth, p[2],p[3], p[4], p[5], height_map)
+		terrain_height = flattenPartition(matrix, p[2],p[3], p[4], p[5], height_map)
 		logging.info("Terrain was flattened at height {}".format(terrain_height))
 		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
+		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
 	else:
 		heightCounts = utilityFunctions.getHeightCounts(height_map, p[2],p[3], p[4], p[5])
 		terrain_height = max(heightCounts, key=heightCounts.get)
 		logging.info("No changes in terrain were necessary, terrain at height {}".format(terrain_height))
 		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
+		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
 
+	h = matrix.getMatrixY(terrain_height)
 	logging.info("Index of height {} in selection box matrix: {}".format(terrain_height, h))
 
 	return h
@@ -349,7 +351,7 @@ def prepareLot(level, box, matrix, height, width, depth, p, height_map):
 # Given the map matrix, a partition (x_min, x_max, z_min, z_max) and a
 # height_map, perform earthworks on this lot by the flattening
 # returns the height in which construction should start
-def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_min, z_max, height_map):
+def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 
 	heightCounts = utilityFunctions.getHeightCounts(height_map, x_min, x_max, z_min, z_max)
 	most_ocurred_height = max(heightCounts, key=heightCounts.get)
@@ -358,13 +360,18 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 	#print("Height Counts: ", heightCounts)
 	#print("Most ocurred height: ", most_ocurred_height)
 
-	box_xmin = utilityFunctions.convertWidthMatrixToBox(box, width, x_min)
-	box_zmin = utilityFunctions.convertDepthMatrixToBox(box, depth, z_min)
+	#box_xmin = utilityFunctions.convertWidthMatrixToBox(box, width, x_min)
+	#box_zmin = utilityFunctions.convertDepthMatrixToBox(box, depth, z_min)
+	box_xmin = matrix.getWorldX(x_min)
+	box_zmin = matrix.getWorldZ(z_min)
+
+
+
 	#print("Reconverted coords: ", height_map[x_min][z_min], box_xmin, box_zmin)
 
 	#base_block = level.blockAt(box_xmin, height_map[x_min][z_min], box_zmin)
 	#print("Base Block at coords ", x_min, x_max, ": ", base_block)
-	base_block = utilityFunctions.getMostOcurredGroundBlock(level, height_map, x_min, x_max, z_min, z_max)
+	base_block = utilityFunctions.getMostOcurredGroundBlock(matrix, height_map, x_min, x_max, z_min, z_max)
 	logging.info("Most occurred ground block: {}".format(base_block))
 	logging.info("Flattening at height {}".format(most_ocurred_height))
 
@@ -373,7 +380,8 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 			if height_map[x][z] == most_ocurred_height:
 				# Equal height! No flattening needed
 				# but lets use the base block just in case
-				matrix[height_map[x][z]][x][z] = base_block
+				matrix.setValue(height_map[x][z], x, z, base_block)
+				#matrix[height_map[x][z]][x][z] = base_block
 			if height_map[x][z] != most_ocurred_height:
 				#print(x, z, " Different Height!")
 
@@ -381,14 +389,17 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 					#print("Position ", x, z, " of height_map is -1. Cannot do earthworks.")
 					continue
 
-				matrix_height = utilityFunctions.convertHeightCoordinates(box, height, height_map[x][z])
-				desired_matrix_height = utilityFunctions.convertHeightCoordinates(box, height, most_ocurred_height)
+				#matrix_height = utilityFunctions.convertHeightCoordinates(box, height, height_map[x][z])
+				#desired_matrix_height = utilityFunctions.convertHeightCoordinates(box, height, most_ocurred_height)
+				matrix_height = matrix.getMatrixY(height_map[x][z])
+				desired_matrix_height = matrix.getMatrixY(most_ocurred_height)
 				#print("height_map[x][z] = ", height_map[x][z], ", matrix_height = ", matrix_height)
 				#print("most_ocurred_height = ", most_ocurred_height, ", desired_matrix_height = ", desired_matrix_height)
 
 				if desired_matrix_height > matrix_height:
-					for y in utilityFunctions.twoway_range(matrix_height, desired_matrix_height):
-						matrix[y][x][z] = base_block
+					for y in range(matrix_height, desired_matrix_height):
+						matrix.setValue(y,x,z, base_block)
+						#matrix[y][x][z] = base_block
 				else:
 					#update every block between top height and the desired height
 					# when bringing the ground to a lower level, this will have the 
@@ -396,9 +407,11 @@ def flattenPartition(matrix, level, box, height, width, depth, x_min, x_max, z_m
 					# this may cause some things to be unproperly erased
 					# (e.g. a branch of a tree coming from an nearby block)
 					# but this is probably the best/less complex solution for this
-					for y in utilityFunctions.twoway_range(height-1, desired_matrix_height+1):
-						matrix[y][x][z] = 0
-					matrix[desired_matrix_height][x][z] = base_block
+					for y in range(matrix.height-1, desired_matrix_height):
+						matrix.setValue(y,x,z, 0)
+						#matrix[y][x][z] = 0
+					matrix.setValue(desired_matrix_height,x,z, base_block)
+					#matrix[desired_matrix_height][x][z] = base_block
 
 	return most_ocurred_height
 
@@ -441,14 +454,14 @@ def fillBuilding(level, box, matrix, height, width, depth, p, height_map, option
 
 	#print(p[0],p[1],p[2],p[3], p[4], p[5])	
 	#if RNG.random() > 0.5:
-	h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+	h = prepareLot(matrix, p, height_map)
 	building = generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5], options)
 	constructionArea = building.constructionArea
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
 	#utilityFunctions.updateHeightMap(height_map, constructionArea[2], constructionArea[3], constructionArea[4], constructionArea[5], -1)
 	return building
 
-def fillHouse(level, box, matrix, height, width, depth, p, height_map, options):
+def fillHouse(matrix, height, width, depth, p, height_map, options):
 	logging.info("Generating a house in lot {}".format(p))
 	logging.info("Terrain before flattening: ")
 	for x in range (p[2], p[3]):
@@ -459,7 +472,7 @@ def fillHouse(level, box, matrix, height, width, depth, p, height_map, options):
 			
 	#print(p[0],p[1],p[2],p[3], p[4], p[5])
 	#if RNG.random() > 0.5:	
-	h = prepareLot(level, box, matrix, height, width, depth, p, height_map)
+	h = prepareLot(matrix, p, height_map)
 
 	logging.info("Terrain after flattening: ")
 	for x in range (p[2], p[3]):

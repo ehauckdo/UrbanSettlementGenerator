@@ -66,7 +66,7 @@ def findTerrain(level, x, z, miny, maxy):
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrainNew(level, x, z, miny, maxy):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
+	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
 	ground_like = [1, 2, 3]
 	water_like = [8, 9, 10, 11]
 
@@ -227,9 +227,81 @@ class dotdict(dict):
         return self.get(attr, None)
 
 # generate and return 3d matrix as in the format matrix[h][w][d] 
-def generateMatrix(width, depth, height, options):
-	matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
+def generateMatrix(level, box, width, depth, height, options):
+
+	matrix = Matrix(level, box, height, width, depth)
+	#matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
+
+	#for y, h in zip(range(box.miny,box.maxy), range(0,height)):
+	#	for x, w in zip(range(box.minx,box.maxx), range(0,width)):
+	#		for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
+	#			matrix[h][w][d] != dotdict({"value": level.blockAt(x,y,z), "changed": False})
+				
 	return matrix
+
+class Matrix:
+
+	min_x = max_x = min_y = max_y = min_z = max_z = -1
+	width = height = depth = -1
+	matrix = None
+
+	def __init__(self, level, box, height, width, depth):
+		self.level = level
+		self.width = width
+		self.height = height
+		self.depth = depth
+		self.y_min = box.miny
+		self.y_max = box.maxy
+		self.x_min = box.minx
+		self.x_max = box.maxx
+		self.z_min = box.minz
+		self.z_max = box.maxz
+		self.matrix = [[[None for z in range(depth)] for x in range(width)] for y in range(height)]
+		self.changed = [[[False for z in range(depth)] for x in range(width)] for y in range(height)]
+
+	def getValue(self, y,x,z):
+		if self.changed[y][x][z] == True:
+			return self.matrix[y][x][z]
+		else:
+			return self.level.blockAt(x,y,z)
+
+	def setValue(self, y,x,z, value):
+		self.matrix[y][x][z] = value
+		self.changed[y][x][z] = True
+
+	def isChanged(self, y,x,z):
+		return self.changed[y][x][z]
+
+	def getWorldX(self, x):
+		for world_x, matrix_x in zip(range(self.x_min,self.x_max), range(0,self.width)):
+			if matrix_x == x:
+				return world_x
+
+	def getWorldZ(self, z):
+		for world_z, matrix_z in zip(range(self.z_min,self.z_max), range(0,self.depth)):
+			if matrix_z == z:
+				return world_z
+
+	def getWorldY(self, y):
+		for world_y, matrix_y in zip(range(self.y_min,self.y_max), range(0,self.height)):
+			if matrix_y == y:
+				return world_y
+
+	def getMatrixX(self, x):
+		for world_x, matrix_x in zip(range(self.x_min,self.x_max), range(0, self.width)):
+			if world_x == x:
+				return matrix_x
+
+	def getMatrixZ(self, z):
+		for world_z, matrix_z in zip(range(self.z_min,self.z_max), range(0, self.depth)):
+			if world_z == z:
+				return matrix_z
+
+	def getMatrixY(self, y):
+		for world_y, matrix_y in zip(range(self.y_min,self.y_max), range(0, self.height)):
+			if world_y == y:
+				return matrix_y
+
 
 # get a subsection of a give arean partition based on the percentage
 def getSubsection(y_min, y_max, x_min, x_max, z_min, z_max, percentage=0.8):
@@ -517,17 +589,22 @@ def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
 				flood_values[value] += 1
 	return flood_values
 
-def getMostOcurredGroundBlock(level, height_map, min_x, max_x, min_z, max_z):
+def getMostOcurredGroundBlock(matrix, height_map, min_x, max_x, min_z, max_z):
 	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
 	block_values = {}
+	print("--SEARCHING MOST OCCURRED!")
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
-			groundBlock = level.blockAt(x, height_map[x][z], z)
+			groundBlock = matrix.getValue(height_map[x][z], x, z)
+			if type(groundBlock) == tuple:
+				groundBlock = groundBlock[0]
+			print("GROUND BLOCK: ", groundBlock)
+			print("BLOCK VALUES KEYS: ", block_values.keys())
 			if groundBlock not in block_values.keys():
 				block_values[groundBlock] = 1
 			else:
 				block_values[groundBlock] += 1
-
+	print("--FINISHED SEARCH!")
 	for key in sorted(block_values, key=block_values.get):
 		if key not in air_like:
 			return (key, 0)
@@ -567,11 +644,14 @@ def updateWorld(level, box, matrix, height, width, depth):
 	for y, h in zip(range(box.miny,box.maxy), range(0,height)):
 		for x, w in zip(range(box.minx,box.maxx), range(0,width)):
 			for z, d in zip(range(box.minz,box.maxz), range(0,depth)):
-				if matrix[h][w][d] != None:
+				#if matrix[h][w][d] != None:
+				if matrix.isChanged(h,w,d):
 					try:
-						setBlock(level, (matrix[h][w][d][0], matrix[h][w][d][1]), x, y, z)
+						block = matrix.getValue(h,w,d)
+						setBlock(level, (block[0], block[1]), x, y, z)
 					except:
-						setBlock(level, (matrix[h][w][d], 0), x, y, z)
+						block = matrix.getValue(h,w,d)
+						setBlock(level, (block[0], 0), x, y, z)
 
 def getCentralPoint(x_min, x_max, z_min, z_max):
 	x_mid = x_max - int((x_max - x_min)/2)
