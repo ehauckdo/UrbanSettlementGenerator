@@ -7,13 +7,17 @@ import pickle
 import RNG
 import logging
 from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
-import HouseGenerator 
-import MultistoreyBuildingGenerator
+import GenerateHouse 
+import GenerateBuilding
 from Earthworks import prepareLot
 
 logging.basicConfig(filename="log", level=logging.INFO, filemode='w')
-#logging.getLogger().addHandler(logging.StreamHandler())
+
+# remove INFO logs from pymclevel
 logging.getLogger("pymclevel").setLevel(logging.WARNING)
+
+# Uncomment this to log to stdout as well!
+#logging.getLogger().addHandler(logging.StreamHandler())
 
 def perform_new(level, box, options, height_map=None):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
@@ -83,13 +87,13 @@ def perform(level, box, options, height_map=None):
 		logging.info("Skipping height map generation")
 	
 	# ==== PARTITIONING OF NEIGHBOURHOODS ==== 
-	(center, neighbourhoods) = generateNeighbourhoodPartitioning(world_space, height_map)
+	(center, neighbourhoods) = generateCenterAndNeighbourhood(world_space, height_map)
 
 	# ====  GENERATING CITY CENTER ==== 
 	all_buildings = []
 	# space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
 	number_of_tries = 10
-	minimum_h = 3 
+	minimum_h = 50 
 	minimum_w = 25
 	mininum_d = 25
 
@@ -97,19 +101,22 @@ def perform(level, box, options, height_map=None):
 	available_lots = 0
 	maximum_tries = 50
 	current_try = 0
+	partitioning_list = []
 	bestPartitioning = []
 
 	# run the partitioning algorithm for number_of_tries to get different partitionings of the same area
 	logging.info("Generating {} different partitionings for the the City Centre {}".format(number_of_tries, center))
-	partitioning_list = []
 	partitioning = None
 	threshold = 1
 	while available_lots < minimum_lots and current_try < maximum_tries:
 
 		for i in range(number_of_tries):
+
+			# generate a partitioning through some algorithm
 			partitioning = binarySpacePartitioning(center[0], center[1], center[2], center[3], center[4], center[5], [])
 			#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
 
+			# remove invalid partitions from the partitioning
 			valid_partitioning = []
 			for p in partitioning:
 				(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
@@ -125,12 +132,10 @@ def perform(level, box, options, height_map=None):
 				else:
 					logging.info("Failed Conditions {}".format(failed_conditions))
 
-
+			# put them inside a list in the formart (size_of_partitioning, partitioning)
 			partitioning_list.append((len(valid_partitioning), valid_partitioning))
 			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
 
-			#valid_partitioning = cleanPartition(partitioning, height_map, minimum_h, minimum_w, mininum_d)
-			#partitioning_list.append((len(valid_partitioning), valid_partitioning))
 		
 		# order partitions by number of valid lots and get the one with the highest
 		partitioning_list = sorted(partitioning_list, reverse=True)
@@ -153,11 +158,10 @@ def perform(level, box, options, height_map=None):
 		building = generateBuilding(world, partition, height_map)
 		all_buildings.append(building)
 
-	# # ==== GENERATING NEIGHBOURHOODS ==== 
-	for partitioning in neighbourhoods:
+	# ==== GENERATING NEIGHBOURHOODS ==== 
+	for neigh in neighbourhoods:
 
-		space = utilityFunctions.dotdict({"y_min": partitioning[0], "y_max": partitioning[1], "x_min": partitioning[2], "x_max": partitioning[3], "z_min": partitioning[4], "z_max": partitioning[5]})
-		minimum_h = 3 
+		minimum_h = 10 
 		minimum_w = 16
 		mininum_d = 16
 
@@ -167,13 +171,13 @@ def perform(level, box, options, height_map=None):
 		current_try = 0
 		bestPartitioning = []
 
-		logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, space))
+		logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, neigh))
 		partitioning_list = []
 		threshold = 1
 		while available_lots < minimum_lots and current_try < maximum_tries:
 		
 			for i in range(number_of_tries):
-				partitioning = binarySpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+				partitioning = binarySpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
 				#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
 
 				valid_partitioning = []
@@ -211,7 +215,7 @@ def perform(level, box, options, height_map=None):
 			partitioning_list = sorted(partitioning_list, reverse=True)
 			partitioning = partitioning_list[0][1]
 
-		logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), space))
+		logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), neigh))
 		for p in partitioning:
 			logging.info("\t{}".format(p))
 
@@ -326,7 +330,7 @@ def perform(level, box, options, height_map=None):
 	world.updateWorld()
 	
 
-def generateNeighbourhoodPartitioning(space, height_map):
+def generateCenterAndNeighbourhood(space, height_map):
 	neighbourhoods = []
 	logging.info("Generating Neighbourhood Partitioning...")
 	center = utilityFunctions.getSubsection(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, 0.6)
@@ -340,7 +344,7 @@ def generateNeighbourhoodPartitioning(space, height_map):
 def generateBuilding(matrix, p, height_map):
 
 	h = prepareLot(matrix, p, height_map)
-	building = MultistoreyBuildingGenerator.generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5])
+	building = GenerateBuilding.generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5])
 	constructionArea = building.constructionArea
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
 	#utilityFunctions.updateHeightMap(height_map, constructionArea[2], constructionArea[3], constructionArea[4], constructionArea[5], -1)
@@ -365,7 +369,7 @@ def generateHouse(matrix, p, height_map):
 		logging.info(line)
 
 
-	house = HouseGenerator.generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5])
+	house = GenerateHouse.generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5])
 	
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
 

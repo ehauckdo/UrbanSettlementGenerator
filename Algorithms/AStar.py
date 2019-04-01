@@ -17,15 +17,6 @@ class Node():
 def aStar(p1, p2, pathMap, height_map):
 
 	logging.info("(A*) Searching a path between {} and {}".format(p1, p2))
-	# header = "hea "
-	# for z in range(40, 90):
-	# 	header += str(z)+" "
-	# print(header)
-	# for x in range(174, 182):
-	# 	line = str(x)+" "
-	# 	for z in range(40, 90):
-	# 		line += str(height_map[x][z])+" "
-	# 	print(line)
 
 	start_node = Node(None, (p1[1], p1[2]))
 	start_node.g = start_node.h = start_node.f = 0
@@ -58,6 +49,7 @@ def aStar(p1, p2, pathMap, height_map):
 
 		# Found the goal
 		if current_node.position == end_node.position:
+			logging.info("(A*) Finished search, found a path between {} and {}".format(p1, p2))
 			path = []
 			current = current_node
 			while current is not None:
@@ -133,7 +125,8 @@ def aStar(p1, p2, pathMap, height_map):
 			#print("Adding child to open_list: ", child.position)
 			# Add the child to the open list
 			open_list.append(child)
-   
+
+	logging.info("(A*) Finished search, could not found a path between {} and {}".format(p1, p2))
 
 def getManhattanDistance(p1,p2):
 	distance = abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])

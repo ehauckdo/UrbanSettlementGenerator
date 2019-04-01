@@ -1,4 +1,5 @@
 import random
+import logging
 import RNG
 
 def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partitions, partition_min=30, valid_min=15):
@@ -6,7 +7,7 @@ def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partiti
 	split_horizontal = False
 	split_vertical = False
 
-	#print("binarySpacePartitioning params: ", y_init, y_end, x_init, x_end, d_init, d_end, partitions, partition_min, valid_min)
+	#logging.info("binarySpacePartitioning params: ", y_init, y_end, x_init, x_end, d_init, d_end, partitions, partition_min, valid_min)
 	
 	if x_end - x_init > partition_min and d_end - d_init > partition_min:
 		if RNG.choice([True, False]): split_horizontal = True
@@ -20,13 +21,13 @@ def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partiti
 			partitions.append((y_init, y_end, x_init, x_end, d_init, d_end))
 
 	if split_horizontal:
-		#print("split_horizontal", random.randint(x_init, x_end))
+		#logging.info("split_horizontal", random.randint(x_init, x_end))
 		x_mid = RNG.randint(x_init, x_end)
 		binarySpacePartitioning(y_init, y_end, x_init, x_mid, d_init, d_end, partitions, partition_min, valid_min)
 		binarySpacePartitioning(y_init, y_end, x_mid, x_end, d_init, d_end, partitions, partition_min, valid_min)
 		
 	elif split_vertical:
-		#print("split_vertical", random.randint(d_init, d_end))
+		#logging.info("split_vertical", random.randint(d_init, d_end))
 		d_mid = RNG.randint(d_init, d_end)
 		binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_mid, partitions, partition_min, valid_min)
 		binarySpacePartitioning(y_init, y_end, x_init, x_end, d_mid, d_end, partitions, partition_min, valid_min)
@@ -37,7 +38,7 @@ def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partiti
 def quadtreeSpacePartitioning(y_init, y_end, x_init, x_end, z_init, z_end, partitions=[], stop_chance=0, partition_min=25):
 
 	if RNG.random() < stop_chance:
-		#print("Stopping at level ", stop_chance)
+		#logging.info("Stopping at level ", stop_chance)
 		partitions.append((y_init, y_end, x_init, x_end, z_init, z_end))
 		return partitions
 
@@ -69,12 +70,3 @@ def quadtreeSpacePartitioning(y_init, y_end, x_init, x_end, z_init, z_end, parti
 		quadtreeSpacePartitioning(y_init, y_end, x_split, x_end, z_split, z_end, partitions, stop_chance)
 
 	return partitions
-
-	
-
-# if __name__ == '__main__':	
-# 	partitions = binarySpacePartitioning(0, 100, 0, 100, [])
-# 	print("Success!!")
-# 	for p in partitions:
-# 		print(p[0],p[1],p[2],p[3])
-	

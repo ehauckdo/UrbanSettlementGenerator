@@ -1,7 +1,7 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
 from GenerateCarpet import generateCarpet
-from ObjectGenerator import *
+from GenerateObject import *
 import random
 import math
 import RNG

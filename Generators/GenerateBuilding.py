@@ -1,7 +1,7 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
 import random
-from ObjectGenerator import *
+from GenerateObject import *
 import math
 import RNG
 import logging
@@ -35,7 +35,7 @@ def generateHospital(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	generateBuildingWalls(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateBuildingWindows(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
 	generateDoor(matrix, x_min, x_max, z_min, z_max, h_min, h_max, (0,0), (0,0))
-	generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 
@@ -83,7 +83,7 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	#		building.entranceLot = (building.door[0], building.area.x_max, building.door[2])
 	#	generateBuildingWindows_z(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max)
 
-	generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+	generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 	generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
 
@@ -107,8 +107,7 @@ def getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 
 	return (h_min, h_max, x_min, x_max, z_min, z_max)
 
-def generateFloors(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
-	#print("Generating interior!")
+def generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 	cur_floor = h_min
 	floor = 0
 	while cur_floor < h_max:
@@ -151,18 +150,17 @@ def generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_m
 
 	cur_floor = h_min
 	cur_floor_ceiling = cur_floor+floor_size
-	floor = 0
 	while cur_floor < h_max:
 		# generating separating wall between hall and apartments
 		for h in range(cur_floor, cur_floor+floor_size):
 			for x in range(x_min, x_max):
 				matrix.setValue(h, x, z_max-6, wall)
 
+		# generating door to the apartment
 		door_x = x_max - ((x_max-x_min)/2)
 		matrix.setValue(cur_floor+2, door_x, z_max-6, (64,8))
 		matrix.setValue(cur_floor+1, door_x, z_max-6, (64,8))
 
-		floor += 1
 		cur_floor += floor_size
 
 def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
