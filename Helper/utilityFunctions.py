@@ -12,9 +12,11 @@ import copy
 import sys
 import pickle
 
+air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
+ground_like = [1, 2, 3]
+water_like = [8, 9, 10, 11]
+
 # These are a few helpful functions we hope you find useful to use
-
-
 
 # sets the block to the given blocktype at the designated x y z coordinate
 # *params*
@@ -208,9 +210,7 @@ def drillDown(level,box):
 
 # Given an x an z coordinate, this will go from box.miny to maxy and return the first block under an air block
 def findTerrain(level, x, z, miny, maxy):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
-	ground_like = [1, 2, 3]
-	water_like = [8, 9, 10, 11]
+	
 
 	blocks = []
 	for y in xrange(maxy-1, miny-1, -1):
@@ -531,7 +531,13 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 	z = block[1]
 	h = 100
 
-	print
+	def fillUnderneath(matrix, y, x, z, baseBlock):
+		if y < 0: return
+		block = matrix.getValue(y, x, z)
+		if block in air_like or block in water_like:
+			matrix.setValue(y, x, z, baseBlock)
+			fillUnderneath(matrix, y-1, x, z, baseBlock)
+
 	for i in range(0, len(path)-1):
 		block = path[i]
 		x = block[0]
@@ -549,10 +555,16 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 			# if that side block is walkable
 			if z-1 >= 0 and height_map[x][z-1] != -1: 
 				matrix.setValue(h,x,z-1,pavementBlock)
+				# try to fill with earth underneath if it's empty
+				fillUnderneath(matrix, h-1, x, z-1, baseBlock)
+				# fill upwards with air to remove any obstacles
 				for j in range(1,5):
 					matrix.setValue(h+j,x,z-1, (0,0))
+
+
 			if z+1 < matrix.depth and height_map[x][z+1] != -1:
 				matrix.setValue(h,x,z+1,pavementBlock)
+				fillUnderneath(matrix, h-1, x, z+1, baseBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x,z+1, (0,0))
 
@@ -561,10 +573,14 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 			# on the x-1 block) and if that side block is walkable
 			if x-1 >= 0 and height_map[x-1][z] != -1:
 				matrix.setValue(h,x-1,z,pavementBlock)
+				fillUnderneath(matrix, h-1, x-1, z, baseBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x-1,z, (0,0))
+
+
 			if x+1 < matrix.width and height_map[x+1][z] != -1:
 				matrix.setValue(h,x+1,z,pavementBlock)
+				fillUnderneath(matrix, h-1, x+1, z, baseBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x+1,z, (0,0))
 
