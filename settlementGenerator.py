@@ -19,55 +19,6 @@ logging.getLogger("pymclevel").setLevel(logging.WARNING)
 # Uncomment this to log to stdout as well!
 #logging.getLogger().addHandler(logging.StreamHandler())
 
-def perform_new(level, box, options, height_map=None):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
-
-	with open('Test1Buildings', 'rb') as hm_file:
-	    # Step 3
-	    all_buildings = pickle.load(hm_file)
-
-	with open('Test1PathMap', 'rb') as hm_file:
-	    # Step 3
-	    pathMap = pickle.load(hm_file)
-
-	with open('Test1HeightMap', 'rb') as hm_file:
-	    # Step 3
-	    height_map = pickle.load(hm_file)
-
-	print("Buildings: ")
-	for b in all_buildings:
-		print(b.entranceLot)
-
-	# print("Path Map: ")
-	# for z in range(depth):
-	# 	for x in range(width):
-	# 		print(x, z, pathMap[x][z])
-
-	# print("Height Map: ")
-	# for z in range(depth):
-	# 	for x in range(width):
-	# 		print(x, z, height_map[x][z]) 
-
-	vertice1 = all_buildings[0]
-	vertice2 = all_buildings[8]
-
-	#path = utilityFunctions.aStar(vertice1.entranceLot, vertice2.entranceLot, pathMap, height_map)
-	#print("Result: ")
-	#for p in path:
-	#	print(p)
-
-	#all_buildings = [all_buildings[0], all_buildings[1], all_buildings[2], all_buildings[3]]
-
-	MST = utilityFunctions.getMST(all_buildings, pathMap, height_map)
-	print("Final MST: ")
-	for m in MST:
-		print(m[0], m[2].entranceLot, m[3].entranceLot)
-		print("Path: ")
-		if m[1] != None:
-			for p in m[1]:
-				print(p)
-
-
 def perform(level, box, options, height_map=None):
 
 	logging.info("BoundingBox coordinates: ({},{}),({},{}),({},{})".format(box.miny, box.maxy, box.minx, box.maxx, box.minz, box.maxz))
@@ -381,4 +332,54 @@ def generateHouse(matrix, p, height_map):
 		logging.info(line)
 
 	return house
+
+# Using this for experimenting with new features
+def perform_test(level, box, options, height_map=None):
+	(width, height, depth) = utilityFunctions.getBoxSize(box)
+
+	with open('Test1Buildings', 'rb') as hm_file:
+	    # Step 3
+	    all_buildings = pickle.load(hm_file)
+
+	with open('Test1PathMap', 'rb') as hm_file:
+	    # Step 3
+	    pathMap = pickle.load(hm_file)
+
+	with open('Test1HeightMap', 'rb') as hm_file:
+	    # Step 3
+	    height_map = pickle.load(hm_file)
+
+	print("Buildings: ")
+	for b in all_buildings:
+		print(b.entranceLot)
+
+	# print("Path Map: ")
+	# for z in range(depth):
+	# 	for x in range(width):
+	# 		print(x, z, pathMap[x][z])
+
+	# print("Height Map: ")
+	# for z in range(depth):
+	# 	for x in range(width):
+	# 		print(x, z, height_map[x][z]) 
+
+	vertice1 = all_buildings[0]
+	vertice2 = all_buildings[8]
+
+	#path = utilityFunctions.aStar(vertice1.entranceLot, vertice2.entranceLot, pathMap, height_map)
+	#print("Result: ")
+	#for p in path:
+	#	print(p)
+
+	#all_buildings = [all_buildings[0], all_buildings[1], all_buildings[2], all_buildings[3]]
+
+	MST = utilityFunctions.getMST(all_buildings, pathMap, height_map)
+	print("Final MST: ")
+	for m in MST:
+		print(m[0], m[2].entranceLot, m[3].entranceLot)
+		print("Path: ")
+		if m[1] != None:
+			for p in m[1]:
+				print(p)
+
 
