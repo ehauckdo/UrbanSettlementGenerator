@@ -11,72 +11,65 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = No
 
 	house = utilityFunctions.dotdict()
 	house.type = "house"
-	#house.area = (h_min, h_max, x_min, x_max, z_min, z_max)
-	house.area = utilityFunctions.dotdict({"y_min": h_min, "y_max": h_max, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
+	house.lotArea = utilityFunctions.dotdict({"y_min": h_min, "y_max": h_max, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
 
 	utilityFunctions.cleanProperty(matrix, h_min+1, h_max, x_min, x_max, z_min, z_max)
 	generateFence(matrix, h_min, x_min, x_max, z_min, z_max)
 
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
+	ceiling_bottom = h_max -int((h_max-h_min) * 0.5)
+	house.buildArea = utilityFunctions.dotdict({"y_min": h_min, "y_max": ceiling_bottom, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
 	
-	logging.info("Generating house at area {}".format(house.area))
-	logging.info("Construction area {}".format((h_min, h_max, x_min, x_max, z_min, z_max)))
+	logging.info("Generating house at area {}".format(house.lotArea))
+	logging.info("Construction area {}".format(house.buildArea))
 	
 	wall = (43, RNG.randint(11,15))
 	ceiling = (5, RNG.randint(1,5)) if ceiling == None else ceiling
 	floor = wall
 	door = (0,0)
 
-	ceiling_bottom = h_max -int((h_max-h_min) * 0.5)
-	#print("ceiling_bottom", ceiling_bottom)
-	house.constructionArea = (h_min, ceiling_bottom, x_min, x_max, z_min, z_max)
-
-	#walls_pos = [x_min+1, x_max-1, z_min+1, z_max-1]
-	walls_pos = [x_min, x_max, z_min, z_max]
-
 	# generate walls from x_min+1, x_max-1, etc to leave space for the roof
-	generateWalls(matrix, h_min, ceiling_bottom, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
-	generateFloor(matrix, h_min, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], floor)
+	generateWalls(matrix, house.buildArea.y_min, house.buildArea.y_max, house.buildArea.x_min, house.buildArea.x_max, house.buildArea.z_min, house.buildArea.z_max, wall)
+	generateFloor(matrix, house.buildArea.y_min, house.buildArea.x_min, house.buildArea.x_max, house.buildArea.z_min, house.buildArea.z_max, floor)
 
-
-	house.orientation = getOrientation(matrix, house.area)
-	window_y = h_min + (ceiling_bottom-h_min)/2
-	door_y = h_min+1
+	house.orientation = getOrientation(matrix, house.lotArea)
+	window_y = house.buildArea.y_min + (house.buildArea.y_max-house.buildArea.y_min)/2
+	door_y = house.buildArea.y_min + 1
 	
 	if house.orientation == "N":
-		door_x = RNG.randint(walls_pos[0]+1, walls_pos[1]-1)
-		door_z = walls_pos[2]
+		door_x = RNG.randint(house.buildArea.x_min+1, house.buildArea.x_max-1)
+		door_z = house.buildArea.z_min
 		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,1))
-		house.entranceLot = (h_min+1, door_x, house.area.z_min)
+		house.entranceLot = (h_min+1, door_x, house.lotArea.z_min)
 		
 	elif house.orientation == "S":
-		door_x = RNG.randint(walls_pos[0]+1, walls_pos[1]-1)
-		door_z = walls_pos[3]
+		door_x = RNG.randint(house.buildArea.x_min+1, house.buildArea.x_max-1)
+		door_z = house.buildArea.z_max
 		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,3))
-		house.entranceLot = (h_min+1, door_x, house.area.z_max)
+		house.entranceLot = (h_min+1, door_x, house.lotArea.z_max)
 
 	elif house.orientation == "W":
-		door_x = walls_pos[0]
-		door_z = RNG.randint(walls_pos[2]+1, walls_pos[3]-1)
+		door_x = house.buildArea.x_min
+		door_z = RNG.randint(house.buildArea.z_min+1, house.buildArea.z_max-1)
 		generateDoor(matrix, door_y, door_x, door_z, (64,8), (64,0))
-		house.entranceLot = (h_min+1, house.area.x_min, door_x) 
+		house.entranceLot = (h_min+1, house.lotArea.x_min, door_x) 
 
 	elif house.orientation == "E":
-		door_x = walls_pos[1]
-		door_z = RNG.randint(walls_pos[2]+1, walls_pos[3]-1)
+		door_x = house.buildArea.x_max
+		door_z = RNG.randint(house.buildArea.z_min+1, house.buildArea.z_max-1)
 		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,2))
-		house.entranceLot = (h_min+1, house.area.x_max, door_x) 
+		house.entranceLot = (h_min+1, house.lotArea.x_max, door_x) 
 
 	if house.orientation == "N" or house.orientation == "S":
-		generateWindow_alongX(matrix, window_y, walls_pos[0], walls_pos[2], walls_pos[3])
-		generateWindow_alongX(matrix, window_y, walls_pos[1], walls_pos[2], walls_pos[3])
+		generateWindow_alongX(matrix, window_y, house.buildArea.x_min, house.buildArea.z_min, house.buildArea.z_max)
+		generateWindow_alongX(matrix, window_y, house.buildArea.x_max, house.buildArea.z_min, house.buildArea.z_max)
 		generateCeiling_x(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
 	elif house.orientation == "E" or house.orientation == "W":
-		generateWindow_alongZ(matrix, window_y, walls_pos[2], walls_pos[0], walls_pos[1])
-		generateWindow_alongZ(matrix, window_y, walls_pos[3], walls_pos[0], walls_pos[1])
+		generateWindow_alongZ(matrix, window_y, house.buildArea.z_min, house.buildArea.x_min, house.buildArea.x_max)
+		generateWindow_alongZ(matrix, window_y, house.buildArea.z_max, house.buildArea.x_min, house.buildArea.x_max)
 		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
 
-	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], ceiling)
+	generateInterior(matrix, h_min, ceiling_bottom, house.buildArea.x_min, house.buildArea.x_max, house.buildArea.z_min, house.buildArea.z_max, ceiling)
 
 	#for h in range(h_min, 100):
 	#	matrix.setValue(h, house.entranceLot[1], house.entranceLot[2], (35,2))
@@ -116,7 +109,7 @@ def generateFence(matrix, h, x_min, x_max, z_min, z_max):
 		matrix.setValue(h+1, x_max-1, z, (85,0))
 		matrix.setValue(h+1, x_min+1, z, (85,0))
 
-def generateWalls(matrix, h_min, ceiling_bottom, h_max, x_min, x_max, z_min, z_max, wall):
+def generateWalls(matrix, h_min, ceiling_bottom, x_min, x_max, z_min, z_max, wall):
 
 	# walls along x axis
 	for x in range(x_min, x_max+1):
@@ -216,33 +209,6 @@ def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 def generateDoor(matrix, y, x, z, door_up, door_down):
 	matrix.setValue(y+1, x, z, door_up)
 	matrix.setValue(y, x, z, door_down)
-
-def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
-
-	pos = RNG.randint(x_min+1,x_max-1)
-	chance = RNG.random()
-	if chance < 0.50:
-		matrix.setValue(h_min+1, pos, z_min, (64,8))
-		matrix.setValue(h_min, pos, z_min, (64,1))
-		return (h_min, pos, z_min)
-	else:
-		matrix.setValue(h_min+1, pos, z_max, (64,8))
-		matrix.setValue(h_min, pos, z_max, (64,1))
-		return (h_min, pos, z_max)
-
-def generateDoor_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
-
-	pos = RNG.randint(z_min+1,z_max-1)
-	chance = RNG.random()
-	if chance < 0.50:
-		matrix.setValue(h_min+1, x_min, pos, (64,9))
-		matrix.setValue(h_min, x_min, pos, (64,0))
-		return (h_min, x_min, pos)
-	else:
-		matrix.setValue(h_min+1, x_max, pos, (64,9))
-		matrix.setValue(h_min, x_max, pos, (64,0))
-		return (h_min, x_max, pos)
-
 
 
 # The next two functions do the same thing, but they are

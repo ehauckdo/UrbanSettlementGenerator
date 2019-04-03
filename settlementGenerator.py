@@ -296,9 +296,7 @@ def generateBuilding(matrix, p, height_map):
 
 	h = prepareLot(matrix, p, height_map)
 	building = GenerateBuilding.generateBuilding(matrix, h, p[1],p[2],p[3], p[4], p[5])
-	constructionArea = building.constructionArea
 	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
-	#utilityFunctions.updateHeightMap(height_map, constructionArea[2], constructionArea[3], constructionArea[4], constructionArea[5], -1)
 	return building
 
 def generateHouse(matrix, p, height_map):
