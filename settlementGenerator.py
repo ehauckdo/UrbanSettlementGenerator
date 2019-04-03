@@ -248,33 +248,33 @@ def perform(level, box, options, height_map=None):
 
 	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings, "TestMap2HeightMap", "TestMap2PathMap", "TestMap2AllBuildings")
 
-	# ==== CONNECTING BUILDINGS WITH ROADS  ==== 
-	logging.info("Calling MST on {} buildings".format(len(all_buildings)))
-	MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
-	logging.info("MST result: ")
-	for m in MST:
-		logging.info(m)
+	# # ==== CONNECTING BUILDINGS WITH ROADS  ==== 
+	# logging.info("Calling MST on {} buildings".format(len(all_buildings)))
+	# MST = utilityFunctions.getMST_Manhattan(all_buildings, pathMap, height_map)
+	# logging.info("MST result: ")
+	# for m in MST:
+	# 	logging.info(m)
 	
-	pavementBlockID = 4 #171
-	pavementBlockSubtype = 0
-	for m in MST:
-		p1 = m[1]
-		p2 = m[2]
-		logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
-		#path = m[1]
+	# pavementBlockID = 4 #171
+	# pavementBlockSubtype = 0
+	# for m in MST:
+	# 	p1 = m[1]
+	# 	p2 = m[2]
+	# 	logging.info("Pavement with distance {} between {} and {}".format(m[0], p1.entranceLot, p2.entranceLot))
+	# 	#path = m[1]
 
-		p1_entrancePoint = p1.entranceLot
-		p2_entrancePoint = p2.entranceLot
+	# 	p1_entrancePoint = p1.entranceLot
+	# 	p2_entrancePoint = p2.entranceLot
 
-	 	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
-	 	if path != None:
-	 		logging.info("Found path between {} and {}. Generating road...".format(p1.entranceLot, p2.entranceLot))
-		 	utilityFunctions.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
-		else:
-			logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
-	 		utilityFunctions.pavementConnection_old(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
+	#  	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
+	#  	if path != None:
+	#  		logging.info("Found path between {} and {}. Generating road...".format(p1.entranceLot, p2.entranceLot))
+	# 	 	utilityFunctions.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
+	# 	else:
+	# 		logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
+	#  		utilityFunctions.pavementConnection_old(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
 	 	
-		#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
+	# 	#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
 	#utilityFunctions.updateWorld(level, box, world, height, width, depth)

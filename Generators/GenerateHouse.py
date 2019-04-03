@@ -38,53 +38,43 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = No
 	generateWalls(matrix, h_min, ceiling_bottom, h_max, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], wall)
 	generateFloor(matrix, h_min, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], floor)
 
-	if RNG.random() > 0.5:
-		house.orientation = "x"
-		house.door = generateDoor_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
-		if house.door[2] == walls_pos[2]:
-			house.entranceLot = (house.door[0], house.door[1], house.area.z_min)
-			try:
-				for x in range(house.door[1]-1, house.door[1]+2):
-					matrix.setValue(house.door[0], x, house.area.z_min+1, (0,0))
-			except:
-				# there is a possibility of house.door[1]-1 or
-				# house.door[1]+2 being out of range
-				pass
-		else:
-			house.entranceLot = (house.door[0], house.door[1], house.area.z_max)
-			try:
-				for x in range(house.door[1]-1, house.door[1]+2):
-					matrix.setValue(house.door[0], x, house.area.z_max-1, (0,0))
-			except:
-				# there is a possibility of house.door[1]-1 or
-				# house.door[1]+2 being out of range
-				pass
-		generateWindow_x(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
-		generateCeiling_x(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
-	else:
-		house.orientation = "z"
-		house.door = generateDoor_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, door, door)
-		if house.door[1] == walls_pos[0]:
-			house.entranceLot = (house.door[0], house.area.x_min, house.door[2])
-			try:
-				for z in range(house.door[2]-1, house.door[2]+2):
-					matrix.setValue(house.door[0], house.area.x_min+1, z, (0,0)) 
-			except:
-				# there is a possibility of house.door[1]-1 or
-				# house.door[1]+2 being out of range
-				pass
-		else:
-			house.entranceLot = (house.door[0], house.area.x_max, house.door[2])
-			try:
-				for z in range(house.door[2]-1, house.door[2]+2):
-					matrix.setValue(house.door[0], house.area.x_max-1, z, (0,0))
-			except:
-				# there is a possibility of house.door[1]-1 or
-				# house.door[1]+2 being out of range
-				pass
-		generateWindow_z(matrix, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], h_min+1, ceiling_bottom, wall)
-		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
 
+	house.orientation = getOrientation(matrix, house.area)
+	window_y = h_min + (ceiling_bottom-h_min)/2
+	door_y = h_min+1
+	
+	if house.orientation == "N":
+		door_x = RNG.randint(walls_pos[0]+1, walls_pos[1]-1)
+		door_z = walls_pos[2]
+		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,1))
+		house.entranceLot = (h_min+1, door_x, house.area.z_min)
+		
+	elif house.orientation == "S":
+		door_x = RNG.randint(walls_pos[0]+1, walls_pos[1]-1)
+		door_z = walls_pos[3]
+		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,3))
+		house.entranceLot = (h_min+1, door_x, house.area.z_max)
+
+	elif house.orientation == "W":
+		door_x = walls_pos[0]
+		door_z = RNG.randint(walls_pos[2]+1, walls_pos[3]-1)
+		generateDoor(matrix, door_y, door_x, door_z, (64,8), (64,0))
+		house.entranceLot = (h_min+1, house.area.x_min, door_x) 
+
+	elif house.orientation == "E":
+		door_x = walls_pos[1]
+		door_z = RNG.randint(walls_pos[2]+1, walls_pos[3]-1)
+		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,2))
+		house.entranceLot = (h_min+1, house.area.x_max, door_x) 
+
+	if house.orientation == "N" or house.orientation == "S":
+		generateWindow_alongX(matrix, window_y, walls_pos[0], walls_pos[2], walls_pos[3])
+		generateWindow_alongX(matrix, window_y, walls_pos[1], walls_pos[2], walls_pos[3])
+		generateCeiling_x(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
+	elif house.orientation == "E" or house.orientation == "W":
+		generateWindow_alongZ(matrix, window_y, walls_pos[2], walls_pos[0], walls_pos[1])
+		generateWindow_alongZ(matrix, window_y, walls_pos[3], walls_pos[0], walls_pos[1])
+		generateCeiling_z(matrix, ceiling_bottom, h_max, x_min-1, x_max+1, z_min-1, z_max+1, ceiling, wall, 0)
 
 	generateInterior(matrix, h_min, ceiling_bottom, walls_pos[0], walls_pos[1], walls_pos[2], walls_pos[3], ceiling)
 
@@ -223,6 +213,10 @@ def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 				matrix.setValue(old_recr, x, z_min+recr+1, ceiling)
 				matrix.setValue(old_recr, x, z_max-recr-1, ceiling)
 
+def generateDoor(matrix, y, x, z, door_up, door_down):
+	matrix.setValue(y+1, x, z, door_up)
+	matrix.setValue(y, x, z, door_down)
+
 def generateDoor_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, door_down):
 
 	pos = RNG.randint(x_min+1,x_max-1)
@@ -249,46 +243,92 @@ def generateDoor_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, door_up, do
 		matrix.setValue(h_min, x_max, pos, (64,0))
 		return (h_min, x_max, pos)
 
-def generateWindow_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 
-	window_height = h_max - int((h_max - h_min)/1.5)
-	whmin = h_max - int((h_max - h_min)/1.5)
-	whmax = h_max - int((h_max - h_min)/2.5)
 
-	width = z_max - z_min
-	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+# The next two functions do the same thing, but they are
+# separated for more clear understanding
+def generateWindow_alongX(matrix, h, x, z_min, z_max):
+	for z in range(z_min+2, z_max-2, 3):
+		 	matrix.setValue(h, x, z, (20,0))
+		 	matrix.setValue(h-1, x, z, (20,0))
+		 	matrix.setValue(h, x, z+1, (20,0))
+		 	matrix.setValue(h-1, x, z+1, (20,0))
 
-	for p in range(pos_min, pos_max):
-		for w in range(whmin, whmax):
-			matrix.setValue(w, x_min, p, (20,0))
+def generateWindow_alongZ(matrix, h, z, x_min, x_max):
+	for x in range(x_min+2, x_max-2, 3):
 
-	width = z_max - z_min
-	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
-	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+			matrix.setValue(h, x, z, (20,0))
+			matrix.setValue(h-1, x, z, (20,0))
+			matrix.setValue(h, x+1, z, (20,0))
+			matrix.setValue(h-1, x+1, z, (20,0))
 
-	for p in range(pos_min, pos_max):
-		for w in range(whmin, whmax):
-			matrix.setValue(w, x_max, p, (20,0))
+def getOrientation(matrix, area):
+	x_mid = matrix.width/2
+	z_mid = matrix.depth/2
 
-def generateWindow_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
+	bx_mid = area.x_min + (area.x_max-area.x_min)/2
+	bz_mid = area.z_min + (area.z_max-area.z_min)/2
 
-	window_height = h_max - int((h_max - h_min)/1.5)
-	whmin = h_max - int((h_max - h_min)/1.5)
-	whmax = h_max - int((h_max - h_min)/2.5)
+	if bx_mid <= x_mid:
+		if bz_mid <= z_mid:
+			#SOUTH, EAST
+			return RNG.choice(["S", "E"])
+		elif bz_mid > z_mid:
+			# SOUTH, WEST
+			return RNG.choice(["N", "E"])
 
-	width = x_max - x_min
-	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+	elif bx_mid > x_mid:
+		if bz_mid <= z_mid:
+			# return NORTH, EAST
+			return RNG.choice(["S", "W"])
+		elif bz_mid > z_mid:
+			# return NORTH, WEST
+			return RNG.choice(["N", "W"])
+	return None
 
-	for p in range(pos_min, pos_max):
-		for w in range(whmin, whmax):
-			matrix.setValue(w, p, z_min, (20,0))
 
-	width = x_max - x_min
-	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
-	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+# def generateWindow_z(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
 
-	for p in range(pos_min, pos_max):
-		for w in range(whmin, whmax):
-			matrix.setValue(w, p, z_max, (20,0))
+# 	window_height = h_max - int((h_max - h_min)/1.5)
+# 	whmin = h_max - int((h_max - h_min)/1.5)
+# 	whmax = h_max - int((h_max - h_min)/2.5)
+
+# 	width = x_max - x_min
+# 	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+# 	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+
+# 	for p in range(pos_min, pos_max):
+# 		for w in range(whmin, whmax):
+# 			matrix.setValue(w, p, z_min, (20,0))
+
+# 	width = x_max - x_min
+# 	pos_min = RNG.randint(x_min+int(width*0.1),x_min+int(width*0.4))
+# 	pos_max= RNG.randint(x_min+int(width*0.6),x_min+int(width*0.9))
+
+# 	for p in range(pos_min, pos_max):
+# 		for w in range(whmin, whmax):
+# 			matrix.setValue(w, p, z_max, (20,0))
+
+# def generateWindow_x(matrix, x_min, x_max, z_min, z_max, h_min, h_max, wall):
+
+# 	window_height = h_max - int((h_max - h_min)/1.5)
+# 	whmin = h_max - int((h_max - h_min)/1.5)
+# 	whmax = h_max - int((h_max - h_min)/2.5)
+
+# 	width = z_max - z_min
+# 	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+# 	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+
+# 	for p in range(pos_min, pos_max):
+# 		for w in range(whmin, whmax):
+# 			matrix.setValue(w, x_min, p, (20,0))
+
+# 	width = z_max - z_min
+# 	pos_min = RNG.randint(z_min+int(width*0.1),z_min+int(width*0.4))
+# 	pos_max = RNG.randint(z_min+int(width*0.6),z_min+int(width*0.9))
+
+# 	for p in range(pos_min, pos_max):
+# 		for w in range(whmin, whmax):
+# 			matrix.setValue(w, x_max, p, (20,0))
+
+

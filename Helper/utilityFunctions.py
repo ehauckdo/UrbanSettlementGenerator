@@ -512,7 +512,7 @@ def getCentralPoint(x_min, x_max, z_min, z_max):
 	return (x_mid, z_mid)
 
 def pavementConnection_old(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
-	logging.info("Connecting {} and {}", (x_p1, z_p1), (x_p2, z_p2))
+	logging.info("Connecting {} and {}".format((x_p1, z_p1), (x_p2, z_p2)))
 	for x in twoway_range(x_p1, x_p2):
 		#h = height_map[x][z_p1]
 		h = 100
