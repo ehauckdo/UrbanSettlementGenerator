@@ -52,13 +52,13 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = No
 		door_x = house.buildArea.x_min
 		door_z = RNG.randint(house.buildArea.z_min+1, house.buildArea.z_max-1)
 		generateDoor(matrix, door_y, door_x, door_z, (64,8), (64,0))
-		house.entranceLot = (h_min+1, house.lotArea.x_min, door_x) 
+		house.entranceLot = (h_min+1, house.lotArea.x_min, door_z) 
 
 	elif house.orientation == "E":
 		door_x = house.buildArea.x_max
 		door_z = RNG.randint(house.buildArea.z_min+1, house.buildArea.z_max-1)
 		generateDoor(matrix, door_y, door_x, door_z, (64,9), (64,2))
-		house.entranceLot = (h_min+1, house.lotArea.x_max, door_x) 
+		house.entranceLot = (h_min+1, house.lotArea.x_max, door_z) 
 
 	if house.orientation == "N" or house.orientation == "S":
 		generateWindow_alongX(matrix, window_y, house.buildArea.x_min, house.buildArea.z_min, house.buildArea.z_max)
