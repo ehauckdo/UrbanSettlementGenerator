@@ -408,8 +408,10 @@ def getPathMap(height_map, width, depth):
 	return pathMap
 
 
-def getScoreArea_type1(height_map, min_x, max_x, min_z, max_z, initial_value):
-	
+def getScoreArea_type1(height_map, min_x, max_x, min_z, max_z, initial_value=None):
+	if initial_value == None:
+		initial_value = height_map[min_x][min_z]
+
 	ocurred_values = []
 	value = 0
 	for x in range(min_x, max_x+1):
@@ -419,16 +421,20 @@ def getScoreArea_type1(height_map, min_x, max_x, min_z, max_z, initial_value):
 				ocurred_values.append(difference)
   	return len(ocurred_values)
 
-def getScoreArea_type2(height_map, min_x, max_x, min_z, max_z, initial_value):
-	
+def getScoreArea_type2(height_map, min_x, max_x, min_z, max_z, initial_value=None):
+	if initial_value == None:
+		initial_value = height_map[min_x][min_z]
+
 	value = 0
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
 			value += abs(initial_value - height_map[x][z])
   	return value
 
-def getScoreArea_type3(height_map, min_x, max_x, min_z, max_z, initial_value):
-	
+def getScoreArea_type3(height_map, min_x, max_x, min_z, max_z, initial_value=None):
+	if initial_value == None:
+		initial_value = height_map[min_x][min_z]
+
 	value = 0
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
@@ -492,6 +498,11 @@ def removeOverlaping(areas):
 def intersectRect(p1, p2):
     return not (p2[0] >= p1[1] or p2[1] <= p1[0] or p2[3] <= p1[2] or p2[2] >= p1[3])
 
+# returns whether or not 2 partitions are colliding, must be in the format
+# (x_min, x_max, z_min, z_max)
+def intersectPartitions(p1, p2):
+    return not (p2[2] >= p1[3] or p2[3] <= p1[2] or p2[5] <= p1[4] or p2[4] >= p1[5])
+
 # update the minecraft world given a matrix with h,w,d dimensions, and each element in the
 # (x, y) format, where x is the ID of the block and y the subtype
 def updateWorld(level, box, matrix, height, width, depth):
@@ -533,10 +544,17 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 
 	def fillUnderneath(matrix, y, x, z, baseBlock):
 		if y < 0: return
+		air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
+		ground_like = [1, 2, 3]
+		water_like = [8, 9, 10, 11]
 		block = matrix.getValue(y, x, z)
+		if type(block) == tuple: block = block[0]
 		if block in air_like or block in water_like:
 			matrix.setValue(y, x, z, baseBlock)
+			logging.info("Block: {}, Filling.... Moving to height {}".format(block, y-1))
 			fillUnderneath(matrix, y-1, x, z, baseBlock)
+		#else:
+			#logging.info("Finished underneath filling at {}".format(y))
 
 	for i in range(0, len(path)-1):
 		block = path[i]
@@ -545,6 +563,7 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 		#h = 100
 		h = height_map[x][z]
 		matrix.setValue(h,x,z,pavementBlock)
+		fillUnderneath(matrix, h-1, x, z, pavementBlock)
 		for j in range(1, 5):
 			matrix.setValue(h+j,x,z, (0,0))
 
@@ -556,7 +575,8 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 			if z-1 >= 0 and height_map[x][z-1] != -1: 
 				matrix.setValue(h,x,z-1,pavementBlock)
 				# try to fill with earth underneath if it's empty
-				fillUnderneath(matrix, h-1, x, z-1, baseBlock)
+				#logging.info("Filling underneath at height {}".format(h-1))
+				fillUnderneath(matrix, h-1, x, z-1, pavementBlock)
 				# fill upwards with air to remove any obstacles
 				for j in range(1,5):
 					matrix.setValue(h+j,x,z-1, (0,0))
@@ -564,7 +584,8 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 
 			if z+1 < matrix.depth and height_map[x][z+1] != -1:
 				matrix.setValue(h,x,z+1,pavementBlock)
-				fillUnderneath(matrix, h-1, x, z+1, baseBlock)
+				#logging.info("Filling underneath at height {}".format(h-1))
+				fillUnderneath(matrix, h-1, x, z+1, pavementBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x,z+1, (0,0))
 
@@ -573,14 +594,16 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 			# on the x-1 block) and if that side block is walkable
 			if x-1 >= 0 and height_map[x-1][z] != -1:
 				matrix.setValue(h,x-1,z,pavementBlock)
-				fillUnderneath(matrix, h-1, x-1, z, baseBlock)
+				#logging.info("Filling underneath at height {}".format(h-1))
+				fillUnderneath(matrix, h-1, x-1, z, pavementBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x-1,z, (0,0))
 
 
 			if x+1 < matrix.width and height_map[x+1][z] != -1:
 				matrix.setValue(h,x+1,z,pavementBlock)
-				fillUnderneath(matrix, h-1, x+1, z, baseBlock)
+				#logging.info("Filling underneath at height {}".format(h-1))
+				fillUnderneath(matrix, h-1, x+1, z, pavementBlock)
 				for j in range(1,5):
 					matrix.setValue(h+j,x+1,z, (0,0))
 

@@ -18,6 +18,7 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = No
 
 	(h_min, h_max, x_min, x_max, z_min, z_max) = getHouseAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max)
 	ceiling_bottom = h_max -int((h_max-h_min) * 0.5)
+	ceiling_bottom = ceiling_bottom if ceiling_bottom > 8 else 8
 	house.buildArea = utilityFunctions.dotdict({"y_min": h_min, "y_max": ceiling_bottom, "x_min": x_min, "x_max": x_max, "z_min": z_min, "z_max": z_max})
 	
 	logging.info("Generating house at area {}".format(house.lotArea))
@@ -33,7 +34,7 @@ def generateHouse(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling = No
 	generateFloor(matrix, house.buildArea.y_min, house.buildArea.x_min, house.buildArea.x_max, house.buildArea.z_min, house.buildArea.z_max, floor)
 
 	house.orientation = getOrientation(matrix, house.lotArea)
-	window_y = house.buildArea.y_min + (house.buildArea.y_max-house.buildArea.y_min)/2
+	window_y = house.buildArea.y_min + 3 # (house.buildArea.y_max-house.buildArea.y_min)/2
 	door_y = house.buildArea.y_min + 1
 	
 	if house.orientation == "N":
@@ -156,17 +157,13 @@ def generateInterior(matrix, h_min, h_max, x_min, x_max, z_min, z_max, wood):
 
 def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
-	#print("Recursive step ", recr)
-	#print("h_min", h_min,"h_max", h_max,"x_min", x_min, "h_max", x_max, "z_min", z_min,"z_max", z_max)
 	if x_min+recr+1 <= x_max-recr-1:
 		for z in range(z_min, z_max+1):					  # intended pitched roof effect
-			#print("testing z ", z)
 			matrix.setValue(h_min+recr, x_min+recr, z, ceiling)   #       _  
 			matrix.setValue(h_min+recr, x_max-recr, z, ceiling)   #     _| |_
 			matrix.setValue(h_min+recr, x_min+recr+1, z, ceiling) #   _|     |_
 			matrix.setValue(h_min+recr, x_max-recr-1, z, ceiling) # _|         |_
 		for x in range(x_min+recr+2, x_max-recr-1):		
-			#print("testing x ", x)
 			matrix.setValue(h_min+recr, x, z_min+1, wall) # fill front and back part of the roof
 			matrix.setValue(h_min+recr, x, z_max-1, wall)
 
@@ -182,17 +179,13 @@ def generateCeiling_x(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling,
 
 def generateCeiling_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max, ceiling, wall, recr):
 
-	#print("Recursive step ", recr)
-	#print("h_min", h_min,"h_max", h_max,"x_min", x_min, "h_max", x_max, "z_min", z_min,"z_max", z_max)
 	if z_min+recr+1 <= z_max-recr-1:
 		for x in range(x_min, x_max+1):
-			#print("testing x ", x)
 			matrix.setValue(h_min+recr, x, z_min+recr, ceiling)
 			matrix.setValue(h_min+recr, x, z_max-recr, ceiling)
 			matrix.setValue(h_min+recr, x, z_min+recr+1, ceiling)
 			matrix.setValue(h_min+recr, x, z_max-recr-1, ceiling)
 		for z in range(z_min+recr+2, z_max-recr-1):
-			#print("testing z ", z)
 			matrix.setValue(h_min+recr, x_min+1, z, wall)
 			matrix.setValue(h_min+recr, x_max-1, z, wall)
 

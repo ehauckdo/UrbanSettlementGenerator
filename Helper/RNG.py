@@ -23,12 +23,17 @@ def random(state="default"):
 
 	return rng_dictionary[getStateFromString(state)].rand()
 
-def choice(list_objects, state="default"):
+def choice(list_objects, how_many=1, state="default"):
 	if getStateFromString(state) not in rng_dictionary.keys():
 		rng_dictionary[getStateFromString(state)]  = np.random.RandomState()
 
-	return rng_dictionary[getStateFromString(state)].choice(list_objects)
+	return rng_dictionary[getStateFromString(state)].choice(list_objects, how_many)
 
 def setSeed(state, seed):
 	rng_dictionary[getStateFromString(state)] = np.random.RandomState(seed)
 
+def shuffle(list, state="default"):
+	if getStateFromString(state) not in rng_dictionary.keys():
+		rng_dictionary[getStateFromString(state)]  = np.random.RandomState()
+
+	return rng_dictionary[getStateFromString(state)].shuffle(list)

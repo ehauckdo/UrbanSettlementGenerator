@@ -24,13 +24,13 @@ def binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_end, partiti
 		#logging.info("split_horizontal", random.randint(x_init, x_end))
 		x_mid = RNG.randint(x_init, x_end)
 		binarySpacePartitioning(y_init, y_end, x_init, x_mid, d_init, d_end, partitions, partition_min, valid_min)
-		binarySpacePartitioning(y_init, y_end, x_mid, x_end, d_init, d_end, partitions, partition_min, valid_min)
+		binarySpacePartitioning(y_init, y_end, x_mid+1, x_end, d_init, d_end, partitions, partition_min, valid_min)
 		
 	elif split_vertical:
 		#logging.info("split_vertical", random.randint(d_init, d_end))
 		d_mid = RNG.randint(d_init, d_end)
 		binarySpacePartitioning(y_init, y_end, x_init, x_end, d_init, d_mid, partitions, partition_min, valid_min)
-		binarySpacePartitioning(y_init, y_end, x_init, x_end, d_mid, d_end, partitions, partition_min, valid_min)
+		binarySpacePartitioning(y_init, y_end, x_init, x_end, d_mid+1, d_end, partitions, partition_min, valid_min)
 
 	return partitions
 

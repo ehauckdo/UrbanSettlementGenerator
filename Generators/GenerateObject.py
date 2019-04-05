@@ -12,10 +12,9 @@ def generateBookshelf(world, y, x, z):
 	world.setValue(y+2, x-2, z-1, (47,0))
 
 def generateCouch(world, y, x, z):
-	world.setValue(y+1, x+4, z-1, (68, 5))
+	world.setValue(y+1, x+4, z-1, (53, 0))
 	world.setValue(y+1, x+3, z-1, (53, 2))
-	world.setValue(y+1, x+2, z-1, (53, 2))
-	world.setValue(y+1, x+1, z-1, (68, 4))
+	world.setValue(y+1, x+2, z-1, (53, 1))
 
 def generateChandelier(world, y, x, z):
 	world.setValue(y-1, x, z, (85,0))

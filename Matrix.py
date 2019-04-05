@@ -1,3 +1,5 @@
+import logging
+
 class Matrix:
 
 	min_x = max_x = min_y = max_y = min_z = max_z = -1
@@ -20,8 +22,13 @@ class Matrix:
 
 	def getValue(self, y,x,z):
 		if self.changed[y][x][z] == True:
+			#logging.info("changed")
 			return self.matrix[y][x][z]
 		else:
+			#logging.info("not changed, sending raw block")
+			x = self.getWorldX(x)
+			y = self.getWorldY(y)
+			z = self.getWorldZ(z)
 			return self.level.blockAt(x,y,z)
 
 	def setValue(self, y,x,z, value):

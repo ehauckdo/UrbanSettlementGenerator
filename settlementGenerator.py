@@ -7,6 +7,7 @@ import pickle
 import RNG
 import logging
 from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
+import GeneticAlgorithm
 import GenerateHouse 
 import GenerateBuilding
 from Earthworks import prepareLot
@@ -320,7 +321,7 @@ def generateHouse(matrix, p, height_map):
 
 	house = GenerateHouse.generateHouse(matrix, h, p[1],p[2],p[3], p[4], p[5])
 	
-	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-2, p[4]+1, p[5]-2, -1)
+	utilityFunctions.updateHeightMap(height_map, p[2]+1, p[3]-1, p[4]+1, p[5]-1, -1)
 
 	logging.info("Terrain after construction: ")
 	for x in range (p[2], p[3]):
@@ -335,21 +336,24 @@ def generateHouse(matrix, p, height_map):
 def perform_test(level, box, options, height_map=None):
 	(width, height, depth) = utilityFunctions.getBoxSize(box)
 
-	with open('Test1Buildings', 'rb') as hm_file:
+	with open('TestMap1Buildings', 'rb') as hm_file:
 	    # Step 3
 	    all_buildings = pickle.load(hm_file)
 
-	with open('Test1PathMap', 'rb') as hm_file:
+	with open('TestMap1PathMap', 'rb') as hm_file:
 	    # Step 3
 	    pathMap = pickle.load(hm_file)
 
-	with open('Test1HeightMap', 'rb') as hm_file:
+	with open('TestMap1HeightMap', 'rb') as hm_file:
 	    # Step 3
 	    height_map = pickle.load(hm_file)
 
-	print("Buildings: ")
-	for b in all_buildings:
-		print(b.entranceLot)
+	GeneticAlgorithm.runGA(height_map, 0, 255, 0, 255, 0, 255)
+	return
+
+	# print("Buildings: ")
+	# for b in all_buildings:
+	# 	print(b.entranceLot)
 
 	# print("Path Map: ")
 	# for z in range(depth):
@@ -361,8 +365,8 @@ def perform_test(level, box, options, height_map=None):
 	# 	for x in range(width):
 	# 		print(x, z, height_map[x][z]) 
 
-	vertice1 = all_buildings[0]
-	vertice2 = all_buildings[8]
+	#vertice1 = all_buildings[0]
+	#vertice2 = all_buildings[8]
 
 	#path = utilityFunctions.aStar(vertice1.entranceLot, vertice2.entranceLot, pathMap, height_map)
 	#print("Result: ")
@@ -370,14 +374,3 @@ def perform_test(level, box, options, height_map=None):
 	#	print(p)
 
 	#all_buildings = [all_buildings[0], all_buildings[1], all_buildings[2], all_buildings[3]]
-
-	MST = utilityFunctions.getMST(all_buildings, pathMap, height_map)
-	print("Final MST: ")
-	for m in MST:
-		print(m[0], m[2].entranceLot, m[3].entranceLot)
-		print("Path: ")
-		if m[1] != None:
-			for p in m[1]:
-				print(p)
-
-
