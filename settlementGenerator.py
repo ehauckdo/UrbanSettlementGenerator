@@ -174,74 +174,6 @@ def perform(level, box, options, height_map=None):
 		for partition in partitioning:
 			house = generateHouse(world, partition, height_map)
 			all_buildings.append(house)
-
-
-	############# START TESTING SECTION ###############
-
-	# minimum_h = 3 
-	# minimum_w = 16
-	# mininum_d = 16
-
-	# number_of_tries = 10
-	# minimum_lots = 100
-	# available_lots = 0
-	# maximum_tries = 100
-	# current_try = 0
-	# bestPartitioning = []
-
-	# logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, world_space))
-	# partitioning_list = []
-	# threshold = 1
-	# while available_lots < minimum_lots and current_try < maximum_tries:
-	
-	# 	for i in range(number_of_tries):
-	# 		partitioning = binarySpacePartitioning(0, height-1, 0, width-1, 0, depth-1, [])
-	# 		#partitioning = quadtreeSpacePartitioning(world.y_min, world.y_max, world.x_min, world.x_max, world.z_min, world.z_max, [])
-
-	# 		valid_partitioning = []
-	# 		for p in partitioning:
-	# 			(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
-	# 			failed_conditions = [] 
-	# 			cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
-	# 			if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
-	# 			cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
-	# 			if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
-	# 			cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
-	# 			if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
-	# 			if cond1 and cond2 and cond3:
-	# 				valid_partitioning.append(p)
-	# 				logging.info("Passed the 3 conditions!")
-	# 			else:
-	# 				logging.info("Failed Conditions {}".format(failed_conditions))
-
-	# 		partitioning_list.append((len(valid_partitioning), valid_partitioning))
-	# 		logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
-	
-	# 	# order partitions by number of valid lots and get the one with the highest
-	# 	partitioning_list = sorted(partitioning_list, reverse=True)
-	# 	partitioning = partitioning_list[0][1]
-
-	# 	if partitioning_list[0][0] > len(bestPartitioning):
-	# 		bestPartitioning = partitioning
-
-	# 	available_lots = len(bestPartitioning)
-	# 	logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
-
-	# 	threshold += 1
-	# 	current_try += 1
-
-	# 	partitioning_list = sorted(partitioning_list, reverse=True)
-	# 	partitioning = partitioning_list[0][1]
-
-	# logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), world))
-	# for p in partitioning:
-	# 	logging.info("\t{}".format(p))
-
-	# for partition in partitioning:
-	# 	house = generateHouse(world, partition, height_map)
-	# 	all_buildings.append(house)
-
-	############# END TESTING SECTION ###############
  
 	# ==== GENERATE PATH MAP  ==== 
  	# generate a path map that gives the cost of moving to each neighbouring cell
@@ -278,7 +210,6 @@ def perform(level, box, options, height_map=None):
 		#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
-	#utilityFunctions.updateWorld(level, box, world, height, width, depth)
 	world.updateWorld()
 	
 
@@ -331,46 +262,3 @@ def generateHouse(matrix, p, height_map):
 		logging.info(line)
 
 	return house
-
-# Using this for experimenting with new features
-def perform_test(level, box, options, height_map=None):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
-
-	with open('TestMap1Buildings', 'rb') as hm_file:
-	    # Step 3
-	    all_buildings = pickle.load(hm_file)
-
-	with open('TestMap1PathMap', 'rb') as hm_file:
-	    # Step 3
-	    pathMap = pickle.load(hm_file)
-
-	with open('TestMap1HeightMap', 'rb') as hm_file:
-	    # Step 3
-	    height_map = pickle.load(hm_file)
-
-	GeneticAlgorithm.runGA(height_map, 0, 255, 0, 255, 0, 255)
-	return
-
-	# print("Buildings: ")
-	# for b in all_buildings:
-	# 	print(b.entranceLot)
-
-	# print("Path Map: ")
-	# for z in range(depth):
-	# 	for x in range(width):
-	# 		print(x, z, pathMap[x][z])
-
-	# print("Height Map: ")
-	# for z in range(depth):
-	# 	for x in range(width):
-	# 		print(x, z, height_map[x][z]) 
-
-	#vertice1 = all_buildings[0]
-	#vertice2 = all_buildings[8]
-
-	#path = utilityFunctions.aStar(vertice1.entranceLot, vertice2.entranceLot, pathMap, height_map)
-	#print("Result: ")
-	#for p in path:
-	#	print(p)
-
-	#all_buildings = [all_buildings[0], all_buildings[1], all_buildings[2], all_buildings[3]]
