@@ -1,5 +1,6 @@
 from pymclevel import alphaMaterials, BoundingBox
 import utilityFunctions as utilityFunctions
+from GenerateCarpet import generateCarpet
 import random
 from GenerateObject import *
 import math
@@ -29,7 +30,7 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 
 	floor_size = 8
 	if h_max-h_min > 82:
-		h_max = h_min+random.randint(36, 82)
+		h_max = h_min+random.randint(32, 80)
 		
 	while (h_max-h_min) % floor_size != 0:
 		h_max -= 1
@@ -49,10 +50,12 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 		generateBuildingWindows_AlongZ(matrix, h_min, h_max, floor_size, x_min, x_max, z_min)
 		# corridor windows
 		generateBuildingWindows_AlongZ(matrix, h_min, h_max, floor_size, x_min, x_max, z_max)
-
-		generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+		generateCorridorInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_max-6, z_max)
 		generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
-		generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
+		
+		generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
+		generateApartmentInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
+		
 
 	#for h in range(h_min, 100):
 	#	matrix[h][building.entranceLot[1]][building.entranceLot[2]] = (35,2)
@@ -77,14 +80,18 @@ def getBuildingAreaInsideLot(h_min, h_max, x_min, x_max, z_min, z_max):
 def generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall):
 	cur_floor = h_min
 	floor = 0
-	while cur_floor < h_max:
+	while cur_floor < h_max-floor_size:
 		step = cur_floor+floor_size-1
 		if floor % 2 == 0:
 			x = x_max-2
 			z = z_max-2
 			for x1 in range(x, x-3, -1):
+				#removes the floor blocks
 				matrix.setValue(step+1, x1, z, (0, 0))
 				matrix.setValue(step+1, x1, z-1, (0, 0))
+				#removes the carpet blocks
+				matrix.setValue(step+2, x1, z, (0, 0))
+				matrix.setValue(step+2, x1, z-1, (0, 0))
 
 			while step > cur_floor:
 				matrix.setValue(step, x, z, (109, 0))
@@ -130,15 +137,17 @@ def generateFloorPlan(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_m
 
 		cur_floor += floor_size
 
-def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
+def generateApartmentInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
 	
 	cur_floor = h_min
-	cur_floor_ceiling = cur_floor+floor_size
 	floor = 0
 	x_mid = x_max - int((x_max - x_min)/2)
 	z_mid = z_max - int((z_max - z_min)/2)
 	
 	while cur_floor < h_max:
+		cur_floor_ceiling = cur_floor+floor_size
+
+		generateCarpet(matrix.matrix, cur_floor+1, x_min+1, x_max, z_min+1, z_max)
 
 		# bed
 		#matrix.setValue(h_min+1, x_max-1, z_min+1, (26,11)
@@ -160,6 +169,26 @@ def generateInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_ma
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
 		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid)
+
+		cur_floor += floor_size
+
+def generateCorridorInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max):
+	cur_floor = h_min
+	floor = 0
+	x_mid = x_max - int((x_max - x_min)/2)
+	z_mid = z_max - int((z_max - z_min)/2)
+
+	while cur_floor < h_max:
+		cur_floor_ceiling = cur_floor+floor_size
+
+		# chandelier
+		x_mid = x_min + (x_max-x_min)/2
+		z_mid = z_min + (z_max-z_min)/2
+		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid)
+
+		for x in range(x_min+1, x_max):
+			for z in range(z_min+1, z_max):
+				matrix.setValue(cur_floor+1,x,z, (171, 12))
 
 		cur_floor += floor_size
 
