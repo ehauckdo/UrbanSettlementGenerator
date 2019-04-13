@@ -11,15 +11,18 @@ def prepareLot(matrix, p, height_map):
 		terrain_height = flattenPartition(matrix, p[2],p[3], p[4], p[5], height_map)
 		logging.info("Terrain was flattened at height {}".format(terrain_height))
 		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
 		h = matrix.getMatrixY(terrain_height)
 	else:
 		heightCounts = utilityFunctions.getHeightCounts(height_map, p[2],p[3], p[4], p[5])
 		terrain_height = max(heightCounts, key=heightCounts.get)
 		logging.info("No changes in terrain were necessary, terrain at height {}".format(terrain_height))
 		utilityFunctions.updateHeightMap(height_map, p[2], p[3], p[4], p[5], terrain_height)
-		#h = utilityFunctions.convertHeightCoordinates(box, height, terrain_height)
+		# update the ground with the grass block
+		for x in range(x_min, x_max):
+			for z in range(z_min,z_max):
+				matrix.setValue(terrain_height, x, z, (2,0))
 		h = matrix.getMatrixY(terrain_height)
+		
 
 	logging.info("Index of height {} in selection box matrix: {}".format(terrain_height, h))
 
@@ -39,6 +42,7 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 
 	base_block = utilityFunctions.getMostOcurredGroundBlock(matrix, height_map, x_min, x_max, z_min, z_max)
 	logging.info("Most occurred ground block: {}".format(base_block))
+	base_block = (2,0)
 	logging.info("Flattening at height {}".format(most_ocurred_height))
 
 	for x in range(x_min, x_max):

@@ -45,6 +45,10 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 		door_z = z_max
 		generateDoor(matrix, h_min+1, door_x, door_z, (64,9), (64,3))
 		building.entranceLot = (h_min+1, door_x, building.area.z_max)
+		for z in range(door_z+1, building.area.z_max):
+			matrix.setValue(h_min,door_x,z, (4,0))
+			matrix.setValue(h_min,door_x-1,z, (4,0))
+			matrix.setValue(h_min,door_x+1,z, (4,0))
 
 		# apartment windows
 		generateBuildingWindows_AlongZ(matrix, h_min, h_max, floor_size, x_min, x_max, z_min)
@@ -106,8 +110,12 @@ def generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max,
 			x = x_min+2
 			z = z_max-2
 			for x1 in range(x, x+3):
+				#removes the floor blocks
 				matrix.setValue(step+1, x1, z, (0, 0))
 				matrix.setValue(step+1, x1, z-1, (0, 0))
+				#removes the carpet blocks
+				matrix.setValue(step+2, x1, z, (0, 0))
+				matrix.setValue(step+2, x1, z-1, (0, 0))
 			while step > cur_floor:
 				matrix.setValue(step, x, z, (109, 1))
 				matrix.setValue(step, x, z-1, (109, 1))
@@ -168,7 +176,8 @@ def generateApartmentInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_
 		# chandelier
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
-		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid)
+		generateChandelier(matrix, cur_floor_ceiling, x_mid-2, z_mid, 2)
+		generateChandelier(matrix, cur_floor_ceiling, x_mid+2, z_mid, 2)
 
 		cur_floor += floor_size
 

@@ -1,4 +1,5 @@
 import logging
+from pymclevel import TileEntity
 
 class Matrix:
 
@@ -34,6 +35,22 @@ class Matrix:
 	def setValue(self, y,x,z, value):
 		self.matrix[y][x][z] = value
 		self.changed[y][x][z] = True
+
+	def setEntity(self, y,x,z, value, entityID):
+		self.matrix[y][x][z] = value
+		self.changed[y][x][z] = False
+
+		x = self.getWorldX(x)
+		z = self.getWorldZ(z)
+		y = self.getWorldY(y)
+
+		self.level.setBlockAt((int)(x),(int)(y),(int)(z), value[0])
+		self.level.setBlockDataAt((int)(x),(int)(y),(int)(z), value[1])
+
+		chunk = self.level.getChunk(x / 16, z / 16)
+		bed = TileEntity.Create(entityID)
+		TileEntity.setpos(bed, (x, y, z))
+		chunk.TileEntities.append(bed)
 
 	def isChanged(self, y,x,z):
 		return self.changed[y][x][z]
@@ -78,6 +95,11 @@ class Matrix:
 							#setBlock(level, (block[0], block[1]), x, y, z)
 							self.level.setBlockAt((int)(x),(int)(y),(int)(z), block[0])
 							self.level.setBlockDataAt((int)(x),(int)(y),(int)(z), block[1])
+							# if block[0] == 26:
+							# 	chunk = self.level.getChunk(x / 16, z / 16)
+							# 	bed = TileEntity.Create("bed")
+							# 	TileEntity.setpos(bed, (x, y, z))
+							# 	chunk.TileEntities.append(bed)
 						else:
 							self.level.setBlockAt((int)(x),(int)(y),(int)(z), block)
 							#setBlock(level, (block, 0), x, y, z)

@@ -40,16 +40,16 @@ def perform(level, box, options, height_map=None):
 	
 	# ==== PARTITIONING OF NEIGHBOURHOODS ==== 
 	(center, neighbourhoods) = generateCenterAndNeighbourhood(world_space, height_map)
+	all_buildings = []
 
 	# ====  GENERATING CITY CENTER ==== 
-	all_buildings = []
 	# space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
-	number_of_tries = 10
+	number_of_tries = 100
 	minimum_h = 50 
 	minimum_w = 25
 	mininum_d = 25
 
-	minimum_lots = 10
+	minimum_lots = 6
 	available_lots = 0
 	maximum_tries = 50
 	current_try = 0
@@ -65,8 +65,10 @@ def perform(level, box, options, height_map=None):
 		for i in range(number_of_tries):
 
 			# generate a partitioning through some algorithm
-			partitioning = binarySpacePartitioning(center[0], center[1], center[2], center[3], center[4], center[5], [])
-			#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+			if RNG.random() < 0.5:
+				partitioning = binarySpacePartitioning(center[0], center[1], center[2], center[3], center[4], center[5], [])
+			else:
+				partitioning = quadtreeSpacePartitioning(center[0], center[1], center[2], center[3], center[4], center[5], [])
 
 			# remove invalid partitions from the partitioning
 			valid_partitioning = []
@@ -80,33 +82,40 @@ def perform(level, box, options, height_map=None):
 				cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
 				if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
 				if cond1 and cond2 and cond3:
-					valid_partitioning.append(p)
+					score = utilityFunctions.getScoreArea_type1(height_map, x_min, x_max, z_min, z_max)
+					valid_partitioning.append((score, p))
 				else:
 					logging.info("Failed Conditions {}".format(failed_conditions))
 
 			# put them inside a list in the formart (size_of_partitioning, partitioning)
-			partitioning_list.append((len(valid_partitioning), valid_partitioning))
+			partitioning_list.extend(valid_partitioning)
 			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
 
 		
 		# order partitions by number of valid lots and get the one with the highest
-		partitioning_list = sorted(partitioning_list, reverse=True)
-		partitioning = partitioning_list[0][1]
+		partitioning_list = sorted(partitioning_list)
+		final_partitioning = []
 
-		if partitioning_list[0][0] > len(bestPartitioning):
-			bestPartitioning = partitioning
+		for score, partition in partitioning_list:
+			intersect = False
+			for valid_partition in final_partitioning:
+				if utilityFunctions.intersectPartitions(partition, valid_partition):
+					intersect = True
+					break
+			if intersect == False:
+				final_partitioning.append(partition) 
 
-		available_lots = len(bestPartitioning)
+		available_lots = len(final_partitioning)
 		logging.info("Current partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
 
 		threshold += 1
 		current_try += 1
 	
-	logging.info("Final lots ({}) for the City Centre {}: ".format(len(partitioning), center))
-	for p in partitioning:
+	logging.info("Final lots ({}) for the City Centre {}: ".format(len(final_partitioning), center))
+	for p in final_partitioning:
 		logging.info("\t{}".format(p))
 
-	for partition in partitioning:
+	for partition in final_partitioning:
 		building = generateBuilding(world, partition, height_map)
 		all_buildings.append(building)
 
@@ -117,7 +126,8 @@ def perform(level, box, options, height_map=None):
 		minimum_w = 16
 		mininum_d = 16
 
-		minimum_lots = 10
+		number_of_tries = 100
+		minimum_lots = 6
 		available_lots = 0
 		maximum_tries = 50
 		current_try = 0
@@ -143,43 +153,184 @@ def perform(level, box, options, height_map=None):
 					cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
 					if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
 					if cond1 and cond2 and cond3:
-						valid_partitioning.append(p)
+						score = utilityFunctions.getScoreArea_type1(height_map, x_min, x_max, z_min, z_max)
+						valid_partitioning.append((score, p))
 						logging.info("Passed the 3 conditions!")
 					else:
 						logging.info("Failed Conditions {}".format(failed_conditions))
 
-				partitioning_list.append((len(valid_partitioning), valid_partitioning))
+				partitioning_list.extend(valid_partitioning)
 				logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
 		
 			# order partitions by number of valid lots and get the one with the highest
-			partitioning_list = sorted(partitioning_list, reverse=True)
-			partitioning = partitioning_list[0][1]
+			partitioning_list = sorted(partitioning_list)
+			final_partitioning = []
 
-			if partitioning_list[0][0] > len(bestPartitioning):
-				bestPartitioning = partitioning
+			for score, partition in partitioning_list:
+				intersect = False
+				for valid_partition in final_partitioning:
+					if utilityFunctions.intersectPartitions(partition, valid_partition):
+						intersect = True
+						break
+				if intersect == False:
+					final_partitioning.append(partition) 
 
-			available_lots = len(bestPartitioning)
+			available_lots = len(final_partitioning)
 			logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
 
 			threshold += 1
 			current_try += 1
 
-			partitioning_list = sorted(partitioning_list, reverse=True)
-			partitioning = partitioning_list[0][1]
-
-		logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), neigh))
-		for p in partitioning:
+		logging.info("Final lots ({})for the neighbourhood {}: ".format(len(final_partitioning), neigh))
+		for p in final_partitioning:
 			logging.info("\t{}".format(p))
 
-		for partition in partitioning:
+		for partition in final_partitioning:
 			house = generateHouse(world, partition, height_map)
 			all_buildings.append(house)
+
+
+	# # ====  GENERATING CITY CENTER ==== 
+	# all_buildings = []
+	# # space = utilityFunctions.dotdict({"y_min": center[0], "y_max": center[1], "x_min": center[2], "x_max": center[3], "z_min": center[4], "z_max": center[5]})
+	# number_of_tries = 10
+	# minimum_h = 50 
+	# minimum_w = 25
+	# mininum_d = 25
+
+	# minimum_lots = 10
+	# available_lots = 0
+	# maximum_tries = 50
+	# current_try = 0
+	# partitioning_list = []
+	# bestPartitioning = []
+
+	# # run the partitioning algorithm for number_of_tries to get different partitionings of the same area
+	# logging.info("Generating {} different partitionings for the the City Centre {}".format(number_of_tries, center))
+	# partitioning = None
+	# threshold = 1
+	# while available_lots < minimum_lots and current_try < maximum_tries:
+
+	# 	for i in range(number_of_tries):
+
+	# 		# generate a partitioning through some algorithm
+	# 		partitioning = binarySpacePartitioning(center[0], center[1], center[2], center[3], center[4], center[5], [])
+	# 		#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+
+	# 		# remove invalid partitions from the partitioning
+	# 		valid_partitioning = []
+	# 		for p in partitioning:
+	# 			(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
+	# 			failed_conditions = []
+	# 			cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
+	# 			if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+	# 			cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
+	# 			if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+	# 			cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
+	# 			if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+	# 			if cond1 and cond2 and cond3:
+	# 				valid_partitioning.append(p)
+	# 			else:
+	# 				logging.info("Failed Conditions {}".format(failed_conditions))
+
+	# 		# put them inside a list in the formart (size_of_partitioning, partitioning)
+	# 		partitioning_list.append((len(valid_partitioning), valid_partitioning))
+	# 		logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
+
+		
+	# 	# order partitions by number of valid lots and get the one with the highest
+	# 	partitioning_list = sorted(partitioning_list, reverse=True)
+	# 	partitioning = partitioning_list[0][1]
+
+	# 	if partitioning_list[0][0] > len(bestPartitioning):
+	# 		bestPartitioning = partitioning
+
+	# 	available_lots = len(bestPartitioning)
+	# 	logging.info("Current partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+
+	# 	threshold += 1
+	# 	current_try += 1
+	
+	# logging.info("Final lots ({}) for the City Centre {}: ".format(len(partitioning), center))
+	# for p in partitioning:
+	# 	logging.info("\t{}".format(p))
+
+	# for partition in partitioning:
+	# 	building = generateBuilding(world, partition, height_map)
+	# 	all_buildings.append(building)
+
+	# # ==== GENERATING NEIGHBOURHOODS ==== 
+	# for neigh in neighbourhoods:
+
+	# 	minimum_h = 10 
+	# 	minimum_w = 16
+	# 	mininum_d = 16
+
+	# 	minimum_lots = 10
+	# 	available_lots = 0
+	# 	maximum_tries = 50
+	# 	current_try = 0
+	# 	bestPartitioning = []
+
+	# 	logging.info("Generating {} different partitionings for the neighbourhood {}".format(number_of_tries, neigh))
+	# 	partitioning_list = []
+	# 	threshold = 1
+	# 	while available_lots < minimum_lots and current_try < maximum_tries:
+		
+	# 		for i in range(number_of_tries):
+	# 			partitioning = binarySpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
+	# 			#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+
+	# 			valid_partitioning = []
+	# 			for p in partitioning:
+	# 				(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
+	# 				failed_conditions = [] 
+	# 				cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
+	# 				if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+	# 				cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
+	# 				if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+	# 				cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
+	# 				if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+	# 				if cond1 and cond2 and cond3:
+	# 					valid_partitioning.append(p)
+	# 					logging.info("Passed the 3 conditions!")
+	# 				else:
+	# 					logging.info("Failed Conditions {}".format(failed_conditions))
+
+	# 			partitioning_list.append((len(valid_partitioning), valid_partitioning))
+	# 			logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
+		
+	# 		# order partitions by number of valid lots and get the one with the highest
+	# 		partitioning_list = sorted(partitioning_list, reverse=True)
+	# 		partitioning = partitioning_list[0][1]
+
+	# 		if partitioning_list[0][0] > len(bestPartitioning):
+	# 			bestPartitioning = partitioning
+
+	# 		available_lots = len(bestPartitioning)
+	# 		logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+
+	# 		threshold += 1
+	# 		current_try += 1
+
+	# 		partitioning_list = sorted(partitioning_list, reverse=True)
+	# 		partitioning = partitioning_list[0][1]
+
+	# 	logging.info("Final lots ({})for the neighbourhood {}: ".format(len(partitioning), neigh))
+	# 	for p in partitioning:
+	# 		logging.info("\t{}".format(p))
+
+	# 	for partition in partitioning:
+	# 		house = generateHouse(world, partition, height_map)
+	# 		all_buildings.append(house)
+
+
  
 	# ==== GENERATE PATH MAP  ==== 
  	# generate a path map that gives the cost of moving to each neighbouring cell
 	pathMap = utilityFunctions.getPathMap(height_map, width, depth)
 
-	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings, "TestMap2HeightMap", "TestMap2PathMap", "TestMap2AllBuildings")
+	#utilityFunctions.saveFiles(height_map, pathMap, all_buildings, "TestMap1HeightMap", "TestMap1PathMap", "TestMap1AllBuildings")
 
 	# ==== CONNECTING BUILDINGS WITH ROADS  ==== 
 	logging.info("Calling MST on {} buildings".format(len(all_buildings)))
@@ -205,9 +356,9 @@ def perform(level, box, options, height_map=None):
 		 	utilityFunctions.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
 		else:
 			logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
-	 		utilityFunctions.pavementConnection_old(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
+	 		utilityFunctions.pavementConnection_StraightLine(world, p1_entrancePoint[1], p1_entrancePoint[2], p2_entrancePoint[1], p2_entrancePoint[2], height_map, (pavementBlockID, pavementBlockSubtype))
 	 	
-		#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
+	# 	#pavementBlockSubtype = (pavementBlockSubtype+1) % 15
 
 	# ==== UPDATE WORLD ==== 
 	world.updateWorld()

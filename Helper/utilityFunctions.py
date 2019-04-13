@@ -525,14 +525,11 @@ def getCentralPoint(x_min, x_max, z_min, z_max):
 def pavementConnection_StraightLine(matrix, x_p1, z_p1, x_p2, z_p2, height_map, pavementBlock = (4,0)):
 	logging.info("Connecting {} and {}".format((x_p1, z_p1), (x_p2, z_p2)))
 	for x in twoway_range(x_p1, x_p2):
-		#h = height_map[x][z_p1]
-		h = 100
+		h = height_map[x][z_p1]
 		matrix.setValue(h,x,z_p1,pavementBlock)
 		
-
 	for z in twoway_range(z_p1, z_p2):
-		#h = height_map[x_p2][z]
-		h = 100
+		h = height_map[x_p2][z]
 		matrix.setValue(h,x_p2,z, pavementBlock)
 		matrix.setValue(h+1,x_p2,z, (0,0))
 
@@ -659,6 +656,9 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 				elif orientation == "W": stair_subID = 5
 				for ladder_h in range(h+1, next_h+1):
 					matrix.setValue(ladder_h, x, z,(65,stair_subID))
+					# make sure that the ladders in which the stairs are attached
+					# are cobblestone and not dirt, etc
+					matrix.setValue(ladder_h, next_block[0], next_block[1], (pavementBlock))
 			elif h > next_h:
 				if orientation == "N":   stair_subID = 2
 				elif orientation == "S": stair_subID = 3
@@ -666,6 +666,9 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 				elif orientation == "W": stair_subID = 4
 				for ladder_h in range(next_h+1, h+1):
 					matrix.setValue(ladder_h, next_block[0], next_block[1], (65,stair_subID))
+					# make sure that the ladders in which the stairs are attached
+					# are cobblestone and not dirt, etc
+					matrix.setValue(ladder_h, x, z, (pavementBlock))
 
 def getMST_Manhattan(buildings, pathMap, height_map):
 	MST = []
