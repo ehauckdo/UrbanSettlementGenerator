@@ -46,6 +46,7 @@ def perform(level, box, options):
 	current_try = 0
 	threshold = 1
 	partitioning_list = []
+	temp_partitioning_list = []
 
 	# run the partitioning algorithm for iterate times to get different partitionings of the same area
 	logging.info("Generating {} different partitionings for the the City Centre {}".format(iterate, center))
@@ -98,24 +99,26 @@ def perform(level, box, options):
 		all_buildings.append(building)
 
 	# ==== GENERATING NEIGHBOURHOODS ==== 
-	for neigh in neighbourhoods:
+	
+	minimum_h = 10 
+	minimum_w = 16
+	mininum_d = 16
 
-		minimum_h = 10 
-		minimum_w = 16
-		mininum_d = 16
-
-		iterate = 100
-		maximum_tries = 50
-		current_try = 0
-		minimum_lots = 6
-		available_lots = 0
-		threshold = 1
+	iterate = 100
+	maximum_tries = 50
+	current_try = 0
+	minimum_lots = 20
+	available_lots = 0
+	threshold = 1
+	partitioning_list = []
+	final_partitioning = []
+	
+	while available_lots < minimum_lots and current_try < maximum_tries:
 		partitioning_list = []
-
-		logging.info("Generating {} different partitionings for the neighbourhood {}".format(iterate, neigh))
-		while available_lots < minimum_lots and current_try < maximum_tries:
-		
-			for i in range(iterate):
+		for i in range(iterate):
+			for neigh in neighbourhoods:
+				logging.info("Generating {} different partitionings for the neighbourhood {}".format(iterate, neigh))
+				
 				if RNG.random() < 0.5:
 					partitioning = binarySpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
 				else:
@@ -140,24 +143,25 @@ def perform(level, box, options):
 
 				partitioning_list.extend(valid_partitioning)
 				logging.info("Generated a partition with {} valid lots and {} invalids ones".format(len(valid_partitioning), len(partitioning)-len(valid_partitioning)))
-		
-			# order partitions by steepness
-			partitioning_list = sorted(partitioning_list)
-			final_partitioning = utilityFunctions.getNonIntersectingPartitions(partitioning_list)
+	
+		temp_partitioning_list.extend(partitioning_list)
+		# order partitions by steepness
+		temp_partitioning_list = sorted(temp_partitioning_list)
+		final_partitioning = utilityFunctions.getNonIntersectingPartitions(temp_partitioning_list)
 
-			available_lots = len(final_partitioning)
-			logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
+		available_lots = len(final_partitioning)
+		logging.info("Current neighbourhood partitioning with most available_lots: {}, current threshold {}".format(available_lots, threshold))
 
-			threshold += 1
-			current_try += 1
+		threshold += 1
+		current_try += 1
 
 		logging.info("Final lots ({})for the neighbourhood {}: ".format(len(final_partitioning), neigh))
 		for p in final_partitioning:
 			logging.info("\t{}".format(p))
 
-		for partition in final_partitioning:
-			house = generateHouse(world, partition, height_map)
-			all_buildings.append(house)
+	for partition in final_partitioning:
+		house = generateHouse(world, partition, height_map)
+		all_buildings.append(house)
 
 	# ==== GENERATE PATH MAP  ==== 
  	# generate a path map that gives the cost of moving to each neighbouring cell
