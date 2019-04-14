@@ -3,7 +3,6 @@ import utilityFunctions as utilityFunctions
 import random
 import math
 import os
-import pickle
 import RNG
 import logging
 from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
@@ -76,11 +75,11 @@ def perform(level, box, options, height_map=None):
 				(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
 				failed_conditions = []
 				cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
-				if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+				if cond1 == False: failed_conditions.append(1) 
 				cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
-				if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+				if cond2 == False: failed_conditions.append(2) 
 				cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
-				if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+				if cond3 == False: failed_conditions.append(3) 
 				if cond1 and cond2 and cond3:
 					score = utilityFunctions.getScoreArea_type1(height_map, x_min, x_max, z_min, z_max)
 					valid_partitioning.append((score, p))
@@ -139,19 +138,21 @@ def perform(level, box, options, height_map=None):
 		while available_lots < minimum_lots and current_try < maximum_tries:
 		
 			for i in range(number_of_tries):
-				partitioning = binarySpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
-				#partitioning = quadtreeSpacePartitioning(space.y_min, space.y_max, space.x_min, space.x_max, space.z_min, space.z_max, [])
+				if RNG.random() < 0.5:
+					partitioning = binarySpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
+				else:
+					partitioning = quadtreeSpacePartitioning(neigh[0], neigh[1], neigh[2], neigh[3], neigh[4], neigh[5], [])
 
 				valid_partitioning = []
 				for p in partitioning:
 					(y_min, y_max, x_min, x_max, z_min, z_max) = (p[0], p[1], p[2],p[3], p[4], p[5])
 					failed_conditions = [] 
 					cond1 = utilityFunctions.hasValidGroundBlocks(x_min, x_max,z_min,z_max, height_map)
-					if cond1 == False: failed_conditions.append(1) #logging.info("Failed Condition 1!")
+					if cond1 == False: failed_conditions.append(1) 
 					cond2 = utilityFunctions.hasMinimumSize(y_min, y_max, x_min, x_max,z_min,z_max, minimum_h, minimum_w, mininum_d)
-					if cond2 == False: failed_conditions.append(2) #logging.info("Failed Condition 2!")
+					if cond2 == False: failed_conditions.append(2) 
 					cond3 = utilityFunctions.hasAcceptableSteepness(x_min, x_max,z_min,z_max, height_map, utilityFunctions.getScoreArea_type1, threshold)
-					if cond3 == False: failed_conditions.append(3) #logging.info("Failed Condition 3!")
+					if cond3 == False: failed_conditions.append(3) 
 					if cond1 and cond2 and cond3:
 						score = utilityFunctions.getScoreArea_type1(height_map, x_min, x_max, z_min, z_max)
 						valid_partitioning.append((score, p))

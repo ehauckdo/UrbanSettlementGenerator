@@ -29,8 +29,9 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	door = (0,0)
 
 	floor_size = 8
-	if h_max-h_min > 82:
-		h_max = h_min+random.randint(32, 80)
+	max_height = h_max-h_min
+	if max_height > 32:
+		h_max = h_min+random.randint(32, 80 if max_height > 80 else max_height)
 		
 	while (h_max-h_min) % floor_size != 0:
 		h_max -= 1
@@ -193,7 +194,7 @@ def generateCorridorInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_m
 		# chandelier
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
-		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid)
+		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid, 1)
 
 		for x in range(x_min+1, x_max):
 			for z in range(z_min+1, z_max):

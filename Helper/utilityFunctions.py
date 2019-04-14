@@ -8,7 +8,7 @@ from collections import defaultdict
 from AStar import aStar
 from Matrix import Matrix
 import RNG
-import copy
+from copy import deepcopy
 import sys
 import pickle
 
@@ -544,10 +544,7 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 	block = previous_block = path[0]
 	x = block[0]
 	z = block[1]
-	next_block = path[1]
-	next_h = height_map[next_block[0]][next_block[1]]
-	h = 100
-
+	
 	def fillUnderneath(matrix, y, x, z, baseBlock):
 		if y < 0: return
 		air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
@@ -563,7 +560,7 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 			#logging.info("Finished underneath filling at {}".format(y))
 
 	def fillAbove(matrix, y, x, z, up_to):
-		if up_to < 0: return
+		if up_to < 0 or y >= matrix.height: return
 		air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
 		block = matrix.getValue(y, x, z)
 		if type(block) == tuple: block = block[0]
@@ -584,18 +581,18 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 		block = path[i]
 		x = block[0]
 		z = block[1]
-		#h = 100
 		h = height_map[x][z]
 
 		matrix.setValue(h,x,z,pavementBlock)
 		fillUnderneath(matrix, h-1, x, z, pavementBlock)
 		fillAbove(matrix, h+1, x, z, 5)
 
-		logging.info("Generating road at point {}, {}, {}".format(h, x, z))
-		logging.info("next_h: {}".format(next_h))
-
 		next_block = path[i+1]
 		next_h = height_map[next_block[0]][next_block[1]]
+
+		logging.info("Generating road at point {}, {}, {}".format(h, x, z))
+		logging.info("next_h: {}".format(next_h))
+		
 		# check if we are moving in the x axis (so to add a new pavement
 		# on the z-1, z+1 block)
 		if x != next_block[0]:
@@ -673,7 +670,7 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 def getMST_Manhattan(buildings, pathMap, height_map):
 	MST = []
 	vertices = []
-	partitions = copy.deepcopy(buildings)
+	partitions = deepcopy(buildings)
 
 	selected_vertex = partitions[RNG.randint(0, len(partitions)-1)]
 	logging.info("Initial selected partition: {}".format(selected_vertex))
