@@ -1,11 +1,11 @@
-from pymclevel import alphaMaterials, BoundingBox
-import utilityFunctions as utilityFunctions
-from GenerateCarpet import generateCarpet
 import random
-from GenerateObject import *
 import math
 import RNG
 import logging
+from pymclevel import alphaMaterials, BoundingBox
+import utilityFunctions as utilityFunctions
+from GenerateObject import *
+from GenerateCarpet import generateCarpet
 
 def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 
@@ -22,11 +22,9 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 	logging.info("Generating house at area {}".format(building.area))
 	logging.info("Construction area {}".format(building.constructionArea))
 
-	#wall = (43,random.randint(0,8))
-	wall = (159,random.randint(0,15))
+	wall = (159, random.randint(0,15))
 	ceiling = wall
 	floor = wall
-	door = (0,0)
 
 	floor_size = 8
 	max_height = h_max-h_min
@@ -60,10 +58,6 @@ def generateBuilding(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 		
 		generateStairs(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max, wall)
 		generateApartmentInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_min, z_max-6)
-		
-
-	#for h in range(h_min, 100):
-	#	matrix[h][building.entranceLot[1]][building.entranceLot[2]] = (35,2)
 
 	return building
 
@@ -157,24 +151,11 @@ def generateApartmentInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_
 		cur_floor_ceiling = cur_floor+floor_size
 
 		generateCarpet(matrix.matrix, cur_floor+1, x_min+1, x_max, z_min+1, z_max)
-
-		# bed
-		#matrix.setValue(h_min+1, x_max-1, z_min+1, (26,11)
-		#matrix.setValue(h_min+1, x_max-2, z_min+1, (26,3)
-
-		# bed (wool)
 		generateBed(matrix, cur_floor, x_max, z_min)
-
-		# table
 		generateCentralTable(matrix, cur_floor, x_mid, z_mid)
-
-		# bookshelf
 		generateBookshelf(matrix, cur_floor, x_max, z_max)
-
-		# couch
 		generateCouch(matrix, cur_floor, x_min, z_max)
 
-		# chandelier
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
 		generateChandelier(matrix, cur_floor_ceiling, x_mid-2, z_mid, 2)
@@ -191,11 +172,11 @@ def generateCorridorInterior(matrix, h_min, h_max, floor_size, x_min, x_max, z_m
 	while cur_floor < h_max:
 		cur_floor_ceiling = cur_floor+floor_size
 
-		# chandelier
 		x_mid = x_min + (x_max-x_min)/2
 		z_mid = z_min + (z_max-z_min)/2
 		generateChandelier(matrix, cur_floor_ceiling, x_mid, z_mid, 1)
 
+		# corridor's carpet
 		for x in range(x_min+1, x_max):
 			for z in range(z_min+1, z_max):
 				matrix.setValue(cur_floor+1,x,z, (171, 12))
@@ -227,15 +208,7 @@ def generateFloorsDivision(matrix, h_min, h_max, floor_size, x_min, x_max, z_min
 		cur_floor += floor_size
 
 def getOrientation():
-	random = RNG.random()
-	if random > 0:
-		return "S"
-	elif random < 0.5:
-		return "N"
-	elif random < 0.75:
-		return "E"
-	else:
-		return "W"
+	return "S"
 
 def generateDoor(matrix, y, x, z, door_up, door_down):
 	matrix.setValue(y+1, x, z, door_up)
@@ -257,18 +230,3 @@ def generateBuildingWindows_AlongZ(matrix, h_min, h_max, floor_size, x_min, x_ma
 			matrix.setValue(window_h-1, x+1, z, (20,0))
 
 		cur_floor += floor_size
-
-def generateDoor_z(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
-
-	lader_space = z_max-8
-	pos = RNG.randint(z_min+1, lader_space)
-	#pos = z_min+1
-	#chance = RNG.random()
-	#if chance < 0.50:
-	#matrix[h_min+2][x_min][pos] = (64,9)
-	#matrix[h_min+1][x_min][pos] = (64,0)
-	#return (h_min, x_min, pos)
-	#else:
-	matrix.setValue(h_min+2, x_max, pos, (64,9))
-	matrix.setValue(h_min+1, x_max, pos, (64,2))
-	return (h_min, x_max, pos)

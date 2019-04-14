@@ -37,8 +37,6 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 	most_ocurred_height = max(heightCounts, key=heightCounts.get)
 
 	logging.info("Flattening {}".format((x_min, x_max, z_min, z_max)))
-	#print("Height Counts: ", heightCounts)
-	#print("Most ocurred height: ", most_ocurred_height)
 
 	base_block = utilityFunctions.getMostOcurredGroundBlock(matrix, height_map, x_min, x_max, z_min, z_max)
 	logging.info("Most occurred ground block: {}".format(base_block))
@@ -52,7 +50,6 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 				# but lets use the base block just in case
 				matrix.setValue(height_map[x][z], x, z, base_block)
 			if height_map[x][z] != most_ocurred_height:
-				#print(x, z, " Different Height!")
 
 				if height_map[x][z] == -1:
 					logging.warning("Flattening invalid area. Position ", x, z, " of height_map is -1. Cannot do earthworks.")
@@ -60,8 +57,6 @@ def flattenPartition(matrix, x_min, x_max, z_min, z_max, height_map):
 
 				matrix_height = matrix.getMatrixY(height_map[x][z])
 				desired_matrix_height = matrix.getMatrixY(most_ocurred_height)
-				#print("height_map[x][z] = ", height_map[x][z], ", matrix_height = ", matrix_height)
-				#print("most_ocurred_height = ", most_ocurred_height, ", desired_matrix_height = ", desired_matrix_height)
 
 				if desired_matrix_height > matrix_height:
 					for y in range(matrix_height, desired_matrix_height+1):

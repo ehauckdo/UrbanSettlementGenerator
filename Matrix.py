@@ -1,6 +1,11 @@
 import logging
 from pymclevel import TileEntity
 
+# Represents the world in Minecraft
+# stores both the pymclevel object as well as the coordinates
+# of the bounding box selected on mcedit
+# stores a matrix the size of the bounding box to be 
+# manipulated by the filter
 class Matrix:
 
 	min_x = max_x = min_y = max_y = min_z = max_z = -1
@@ -23,10 +28,8 @@ class Matrix:
 
 	def getValue(self, y,x,z):
 		if self.changed[y][x][z] == True:
-			#logging.info("changed")
 			return self.matrix[y][x][z]
 		else:
-			#logging.info("not changed, sending raw block")
 			x = self.getWorldX(x)
 			y = self.getWorldY(y)
 			z = self.getWorldZ(z)
@@ -48,9 +51,9 @@ class Matrix:
 		self.level.setBlockDataAt((int)(x),(int)(y),(int)(z), value[1])
 
 		chunk = self.level.getChunk(x / 16, z / 16)
-		bed = TileEntity.Create(entityID)
-		TileEntity.setpos(bed, (x, y, z))
-		chunk.TileEntities.append(bed)
+		entity = TileEntity.Create(entityID)
+		TileEntity.setpos(entity, (x, y, z))
+		chunk.TileEntities.append(entity)
 
 	def isChanged(self, y,x,z):
 		return self.changed[y][x][z]
@@ -85,6 +88,8 @@ class Matrix:
 			if world_y == y:
 				return matrix_y
 
+	# transfer the changes made to the local matrix to the
+	# pymclevel object
 	def updateWorld(self):
 		for y, h in zip(range(self.y_min,self.y_max), range(0, self.height)):
 			for x, w in zip(range(self.x_min,self.x_max), range(0, self.width)):
@@ -92,15 +97,8 @@ class Matrix:
 					if self.isChanged(h,w,d):
 						block = self.getValue(h,w,d)
 						if type(block) == tuple:
-							#setBlock(level, (block[0], block[1]), x, y, z)
 							self.level.setBlockAt((int)(x),(int)(y),(int)(z), block[0])
 							self.level.setBlockDataAt((int)(x),(int)(y),(int)(z), block[1])
-							# if block[0] == 26:
-							# 	chunk = self.level.getChunk(x / 16, z / 16)
-							# 	bed = TileEntity.Create("bed")
-							# 	TileEntity.setpos(bed, (x, y, z))
-							# 	chunk.TileEntities.append(bed)
 						else:
 							self.level.setBlockAt((int)(x),(int)(y),(int)(z), block)
-							#setBlock(level, (block, 0), x, y, z)
 						

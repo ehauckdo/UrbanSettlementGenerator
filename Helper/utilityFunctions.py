@@ -10,7 +10,6 @@ from Matrix import Matrix
 import RNG
 from copy import deepcopy
 import sys
-import pickle
 
 air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
 ground_like = [1, 2, 3]
@@ -201,7 +200,7 @@ def raytrace((x1, y1, z1), (x2, y2, z2)):
 
 # Given an x an z coordinate, this will drill down a y column from box.maxy until box.miny and return a list of blocks
 def drillDown(level,box):
-	(width, height, depth) = utilityFunctions.getBoxSize(box)
+	(width, height, depth) = getBoxSize(box)
 	blocks = []
 	for y in xrange(maxy, miny, -1):
 		blocks.append(level.blockAt(x, y, z))
@@ -243,7 +242,6 @@ def generateMatrix(level, box, width, depth, height):
 	matrix = Matrix(level, box, height, width, depth)			
 	return matrix
 
-
 # get a subsection of a give arean partition based on the percentage
 def getSubsection(y_min, y_max, x_min, x_max, z_min, z_max, percentage=0.8):
 
@@ -266,23 +264,7 @@ def getSubsection(y_min, y_max, x_min, x_max, z_min, z_max, percentage=0.8):
 
 	return (y_min, y_max, subsection_x_min, subsection_x_max, subsection_z_min, subsection_z_max)
 
-# from a list of partitions in the format of (x_min, x_max, z_min, z_max)
-# return the partition with the biggest area in the list
-def getBiggestPartition(partitions):
-	biggestArea = 0
-	biggestPartition = None
-	for p in partitions:
-		width = p[1] - p[0]
-		depth =  p[3] - p[2]
-		area = width * depth
-		print(area, width, depth)
-		if area > biggestArea:
-			biggestArea = area
-			biggestPartition = p
-	print(biggestArea)
-	return biggestPartition
-
-# fct inner partition from outer and return 4 partitions as the result
+# remove inner partition from outer and return 4 partitions as the result
 def subtractPartition(outer, inner):
 
 	p1 = (outer[0], outer[1], outer[2], inner[2], outer[4], inner[5])
@@ -296,11 +278,7 @@ def getEuclidianDistancePartitions(p1, p2):
 	
 	p1_center = (p1[0] + int((p1[1]-p1[0])*0.5), p1[2] + int((p1[3]-p1[2])*0.5))
 	p2_center = (p2[0] + int((p2[1]-p2[0])*0.5), p2[2] + int((p2[3]-p2[2])*0.5))
-	print("EuclidianDistance: ")
-	print(p1_center)
-	print(p2_center)
 	euclidian_distance = getEuclidianDistance(p1_center,p2_center)
-	print(euclidian_distance)
 	return euclidian_distance
 
 def getEuclidianDistance(p1,p2):
@@ -399,12 +377,6 @@ def getPathMap(height_map, width, depth):
 				if pathMap[x][z].up > threshold or height_map[x][z+1] == -1:
 					pathMap[x][z].up = -1
 			
-
-	#print("PathMap: ")
-	#for x in range(width):
-	#	for z in range(depth):
-	#		logging.info("[{}],[{}]: {}".format(x, z, pathMap[x][z]))
-
 	return pathMap
 
 
@@ -454,7 +426,6 @@ def getHeightCounts(matrix, min_x, max_x, min_z, max_z):
 	return flood_values
 
 def getMostOcurredGroundBlock(matrix, height_map, min_x, max_x, min_z, max_z):
-	air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79]
 	block_values = {}
 	for x in range(min_x, max_x+1):
 		for z in range(min_z, max_z+1):
@@ -503,6 +474,18 @@ def intersectRect(p1, p2):
 def intersectPartitions(p1, p2):
     return not (p2[2] >= p1[3] or p2[3] <= p1[2] or p2[5] <= p1[4] or p2[4] >= p1[5])
 
+def getNonIntersectingPartitions(partitioning):
+	cleaned_partitioning = []
+	for score, partition in partitioning:
+		intersect = False
+		for valid_partition in cleaned_partitioning:
+			if intersectPartitions(partition, valid_partition):
+				intersect = True
+				break
+		if intersect == False:
+			cleaned_partitioning.append(partition) 
+	return cleaned_partitioning
+
 # update the minecraft world given a matrix with h,w,d dimensions, and each element in the
 # (x, y) format, where x is the ID of the block and y the subtype
 def updateWorld(level, box, matrix, height, width, depth):
@@ -547,9 +530,6 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 	
 	def fillUnderneath(matrix, y, x, z, baseBlock):
 		if y < 0: return
-		air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
-		ground_like = [1, 2, 3]
-		water_like = [8, 9, 10, 11]
 		block = matrix.getValue(y, x, z)
 		if type(block) == tuple: block = block[0]
 		if block in air_like or block in water_like:
@@ -561,7 +541,6 @@ def pavementConnection(matrix, path, height_map, pavementBlock = (4,0), baseBloc
 
 	def fillAbove(matrix, y, x, z, up_to):
 		if up_to < 0 or y >= matrix.height: return
-		air_like = [0, 6, 17, 18, 30, 31, 32, 37, 38, 39, 40, 59, 81, 83, 85, 104, 105, 106, 107, 111, 141, 142, 161, 162, 175, 78, 79, 99]
 		block = matrix.getValue(y, x, z)
 		if type(block) == tuple: block = block[0]
 		if block in air_like:
@@ -718,18 +697,6 @@ def cleanProperty(matrix, h_min, h_max, x_min, x_max, z_min, z_max):
 			for z in range(z_min, z_max+1):
 				matrix.setValue(h,x,z, (0,0))
 
-
-def saveFiles(height_map, pathMap, all_buildings, file_name1, file_name2, file_name3):
-	with open(file_name1, 'wb') as matrix_file:
- 		pickle.dump(height_map, matrix_file)
-
- 	with open(file_name2, 'wb') as matrix_file:
- 		pickle.dump(pathMap, matrix_file)
-
-	with open(file_name3, 'wb') as matrix_file:
-		pickle.dump(all_buildings, matrix_file)
-
-
 # algorithm to randomly find flat areas given a height map
 def getAreasSameHeight(box,terrain):
 	validAreas = []
@@ -752,10 +719,6 @@ def getAreasSameHeight(box,terrain):
 	return validAreas
 
 def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum_w, mininum_d):
-	# sample testing
-	#print("Testing if valid area starting in ", random_x, random_z)
-	#print("limits of matrix: ", minx, maxx, minz, maxz)
-
 	if random_x + mininum_w > maxx or random_z + mininum_d > maxz or terrain[random_x][random_z] == -1:
 		return False
 
@@ -768,26 +731,3 @@ def checkSameHeight(terrain, minx, maxx, minz, maxz, random_x, random_z, mininum
 				return False
 
 	return True
-
-def getFloodFill(matrix, x_min, x_max, z_min, z_max, random_x, random_z, floodSize):
-
-	initial_value = matrix[random_x][random_z]
-
-	flood_minx = flood_maxx = random_x
-	flood_minz = flood_maxz = random_z
-	
-	for i in range(floodSize+1):
-
-		if random_x - i >= x_min:
-			flood_minx = random_x - i
-
-		if random_x + i <= x_max:
-			flood_maxx = random_x + i
-
-		if random_z - i >= z_min:
-			flood_minz = random_z - i
-
-		if random_z + i <= z_max:
-			flood_maxz = random_z + i
-
-	return (flood_minx, flood_maxx, flood_minz, flood_maxz)
