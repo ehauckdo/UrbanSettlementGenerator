@@ -6,7 +6,6 @@ import os
 import RNG
 import logging
 from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
-import GeneticAlgorithm
 import GenerateHouse 
 import GenerateBuilding
 from Earthworks import prepareLot
