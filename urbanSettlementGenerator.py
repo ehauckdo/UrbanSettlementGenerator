@@ -9,7 +9,7 @@ from SpacePartitioning import binarySpacePartitioning, quadtreeSpacePartitioning
 import GenerateHouse 
 import GenerateBuilding
 from Earthworks import prepareLot
-from PathBuilding import pavementConnection, pavementConnection_StraightLine
+import PathBuilding
 
 # change to INFO if you want a verbose log!
 logging.basicConfig(filename="log", level=logging.WARNING, filemode='w')
@@ -182,10 +182,10 @@ def perform(level, box, options):
 	 	path = utilityFunctions.aStar(p1.entranceLot, p2.entranceLot, pathMap, height_map)
 	 	if path != None:
 	 		logging.info("Found path between {} and {}. Generating road...".format(p1.entranceLot, p2.entranceLot))
-		 	pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
+		 	PathBuilding.pavementConnection(world, path, height_map, (pavementBlockID, pavementBlockSubtype))
 		else:
 			logging.info("Couldnt find path between {} and {}. Generating a straight road between them...".format(p1.entranceLot, p2.entranceLot))
-	 		pavementConnection_StraightLine(world, p1.entranceLot[1], p1.entranceLot[2], p2.entranceLot[1], p2.entranceLot[2], height_map, (pavementBlockID, pavementBlockSubtype))
+	 		PathBuilding.pavementConnection_StraightLine(world, p1.entranceLot[1], p1.entranceLot[2], p2.entranceLot[1], p2.entranceLot[2], height_map, (pavementBlockID, pavementBlockSubtype))
 
 	# ==== UPDATE WORLD ==== 
 	world.updateWorld()
